@@ -13,13 +13,14 @@ export class Level1 {
         this.player = null;
         this.enemies = [];
         this.platforms = [];
+        this.obstacles = []; // Circular obstacles (trees, torches, etc.)
         this.score = 0;
         
         // Level config
         this.totalEnemies = 10;
         this.spawnedCount = 0;
         this.killCount = 0;
-        this.arenaBounds = { minX: -18, maxX: 18, minZ: -8, maxZ: 8 };
+        this.arenaBounds = { minX: -24, maxX: 24, minZ: -14, maxZ: 14 };
     }
     
     init() {
@@ -30,46 +31,225 @@ export class Level1 {
     }
     
     createEnvironment() {
-        // Ground
-        const groundGeo = new THREE.BoxGeometry(40, 1, 20);
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x3d5a80, roughness: 0.8 });
+        // === GROUND - Grassy terrain ===
+        const groundGeo = new THREE.BoxGeometry(50, 1, 30);
+        const groundMat = new THREE.MeshStandardMaterial({ 
+            color: 0x3d6b3d, 
+            roughness: 0.9 
+        });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.position.y = -0.5;
         ground.receiveShadow = true;
         this.scene.add(ground);
-        this.platforms.push({ mesh: ground, bounds: { minX: -20, maxX: 20, minZ: -10, maxZ: 10, y: 0 }});
+        this.platforms.push({ mesh: ground, bounds: { minX: -25, maxX: 25, minZ: -15, maxZ: 15, y: 0 }});
         
-        // Floating platforms
-        const platformData = [
-            { x: -12, y: 3, z: 0, w: 6, h: 0.5, d: 4 },
-            { x: 12, y: 3, z: 0, w: 6, h: 0.5, d: 4 },
-            { x: 0, y: 5, z: -5, w: 8, h: 0.5, d: 4 },
-            { x: -8, y: 7, z: 3, w: 5, h: 0.5, d: 3 },
-            { x: 8, y: 7, z: 3, w: 5, h: 0.5, d: 3 },
-        ];
+        // Dirt path (center)
+        const pathGeo = new THREE.BoxGeometry(8, 0.05, 30);
+        const pathMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 1 });
+        const path = new THREE.Mesh(pathGeo, pathMat);
+        path.position.y = 0.03;
+        path.receiveShadow = true;
+        this.scene.add(path);
         
-        platformData.forEach(p => {
-            const geo = new THREE.BoxGeometry(p.w, p.h, p.d);
-            const mat = new THREE.MeshStandardMaterial({ color: 0x5c7a99, roughness: 0.6 });
-            const platform = new THREE.Mesh(geo, mat);
-            platform.position.set(p.x, p.y, p.z);
-            platform.castShadow = true;
-            platform.receiveShadow = true;
-            this.scene.add(platform);
-            this.platforms.push({
-                mesh: platform,
-                bounds: { minX: p.x - p.w/2, maxX: p.x + p.w/2, minZ: p.z - p.d/2, maxZ: p.z + p.d/2, y: p.y + p.h/2 }
-            });
+        // === STONE WALLS (arena boundary) ===
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.8 });
+        
+        // Back wall
+        const backWallGeo = new THREE.BoxGeometry(52, 4, 1);
+        const backWall = new THREE.Mesh(backWallGeo, wallMat);
+        backWall.position.set(0, 2, -15);
+        backWall.castShadow = true;
+        backWall.receiveShadow = true;
+        this.scene.add(backWall);
+        
+        // Side walls
+        const sideWallGeo = new THREE.BoxGeometry(1, 3, 30);
+        const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
+        leftWall.position.set(-25, 1.5, 0);
+        leftWall.castShadow = true;
+        this.scene.add(leftWall);
+        
+        const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
+        rightWall.position.set(25, 1.5, 0);
+        rightWall.castShadow = true;
+        this.scene.add(rightWall);
+        
+        // === TREES (scattered around arena) ===
+        this.createTree(-18, -10);
+        this.createTree(-20, 5);
+        this.createTree(18, -8);
+        this.createTree(20, 6);
+        this.createTree(-10, -12);
+        this.createTree(10, -11);
+        this.createTree(0, 12);
+        
+        // === ROCKS ===
+        this.createRock(-15, 3, 1.0);
+        this.createRock(16, -4, 0.8);
+        this.createRock(-8, -10, 0.7);
+        this.createRock(12, 8, 0.9);
+        this.createRock(-5, 10, 0.6);
+        
+        // === TORCHES ===
+        this.createTorch(-12, -9);
+        this.createTorch(12, -9);
+        this.createTorch(-18, 3);
+        this.createTorch(18, 3);
+        
+        // === WOODEN TRAINING DUMMIES ===
+        this.createDummy(-8, 5);
+        this.createDummy(8, -5);
+        
+        // === GRASS PATCHES ===
+        for (let i = 0; i < 50; i++) {
+            this.createGrass(
+                (Math.random() - 0.5) * 44,
+                (Math.random() - 0.5) * 24
+            );
+        }
+    }
+    
+    createTree(x, z) {
+        const tree = new THREE.Group();
+        
+        // Trunk
+        const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 3, 8);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.9 });
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 1.5;
+        trunk.castShadow = true;
+        tree.add(trunk);
+        
+        // Foliage layers
+        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2d5a2d, roughness: 0.8 });
+        
+        const foliage1 = new THREE.Mesh(new THREE.ConeGeometry(2, 3, 8), foliageMat);
+        foliage1.position.y = 4;
+        foliage1.castShadow = true;
+        tree.add(foliage1);
+        
+        const foliage2 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 8), foliageMat);
+        foliage2.position.y = 5.5;
+        foliage2.castShadow = true;
+        tree.add(foliage2);
+        
+        const foliage3 = new THREE.Mesh(new THREE.ConeGeometry(1, 2, 8), foliageMat);
+        foliage3.position.y = 6.8;
+        foliage3.castShadow = true;
+        tree.add(foliage3);
+        
+        tree.position.set(x, 0, z);
+        this.scene.add(tree);
+        
+        // Add collision (trunk radius)
+        this.obstacles.push({ x, z, radius: 0.6 });
+    }
+    
+    createRock(x, z, scale) {
+        const rockGeo = new THREE.DodecahedronGeometry(scale, 0);
+        const rockMat = new THREE.MeshStandardMaterial({ 
+            color: 0x6b6b6b, 
+            roughness: 0.9,
+            flatShading: true
+        });
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        rock.position.set(x, scale * 0.5, z);
+        rock.rotation.set(Math.random(), Math.random(), Math.random());
+        rock.castShadow = true;
+        rock.receiveShadow = true;
+        this.scene.add(rock);
+    }
+    
+    createTorch(x, z) {
+        const torch = new THREE.Group();
+        
+        // Pole
+        const poleGeo = new THREE.CylinderGeometry(0.08, 0.1, 1.5, 6);
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
+        const pole = new THREE.Mesh(poleGeo, poleMat);
+        pole.position.y = 2;
+        torch.add(pole);
+        
+        // Flame holder
+        const holderGeo = new THREE.CylinderGeometry(0.15, 0.1, 0.3, 6);
+        const holderMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
+        const holder = new THREE.Mesh(holderGeo, holderMat);
+        holder.position.y = 2.8;
+        torch.add(holder);
+        
+        // Flame (glowing)
+        const flameGeo = new THREE.ConeGeometry(0.12, 0.4, 6);
+        const flameMat = new THREE.MeshStandardMaterial({ 
+            color: 0xff6600,
+            emissive: 0xff4400,
+            emissiveIntensity: 1
+        });
+        const flame = new THREE.Mesh(flameGeo, flameMat);
+        flame.position.y = 3.1;
+        torch.add(flame);
+        
+        // Point light
+        const light = new THREE.PointLight(0xff6600, 0.5, 8);
+        light.position.y = 3;
+        torch.add(light);
+        
+        torch.position.set(x, 0, z);
+        this.scene.add(torch);
+        
+        // Add collision
+        this.obstacles.push({ x, z, radius: 0.3 });
+    }
+    
+    createDummy(x, z) {
+        const dummy = new THREE.Group();
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.9 });
+        
+        // Post
+        const postGeo = new THREE.CylinderGeometry(0.15, 0.2, 2.5, 8);
+        const post = new THREE.Mesh(postGeo, woodMat);
+        post.position.y = 1.25;
+        post.castShadow = true;
+        dummy.add(post);
+        
+        // Crossbar (arms)
+        const armGeo = new THREE.BoxGeometry(1.5, 0.15, 0.15);
+        const arms = new THREE.Mesh(armGeo, woodMat);
+        arms.position.y = 2;
+        arms.castShadow = true;
+        dummy.add(arms);
+        
+        // Head (straw)
+        const headGeo = new THREE.SphereGeometry(0.3, 8, 6);
+        const strawMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 1 });
+        const head = new THREE.Mesh(headGeo, strawMat);
+        head.position.y = 2.6;
+        head.castShadow = true;
+        dummy.add(head);
+        
+        dummy.position.set(x, 0, z);
+        this.scene.add(dummy);
+        
+        // Add collision
+        this.obstacles.push({ x, z, radius: 0.4 });
+    }
+    
+    createGrass(x, z) {
+        const grassMat = new THREE.MeshStandardMaterial({ 
+            color: 0x4a7c4a, 
+            side: THREE.DoubleSide 
         });
         
-        // Pillars
-        for (let i = 0; i < 6; i++) {
-            const pillarGeo = new THREE.CylinderGeometry(0.5, 0.6, 4, 8);
-            const pillarMat = new THREE.MeshStandardMaterial({ color: 0x4a6fa5 });
-            const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-            pillar.position.set((i % 2 === 0 ? -15 : 15), 2, -8 + (Math.floor(i / 2) * 8));
-            pillar.castShadow = true;
-            this.scene.add(pillar);
+        for (let i = 0; i < 3; i++) {
+            const bladeGeo = new THREE.PlaneGeometry(0.1, 0.4);
+            const blade = new THREE.Mesh(bladeGeo, grassMat);
+            blade.position.set(
+                x + (Math.random() - 0.5) * 0.3,
+                0.2,
+                z + (Math.random() - 0.5) * 0.3
+            );
+            blade.rotation.y = Math.random() * Math.PI;
+            blade.rotation.x = -0.2;
+            this.scene.add(blade);
         }
     }
     
@@ -95,7 +275,7 @@ export class Level1 {
     
     spawnEnemy() {
         if (this.spawnedCount >= this.totalEnemies) return;
-        const x = (Math.random() - 0.5) * 30;
+        const x = (Math.random() - 0.5) * 32; // Within arena bounds
         const z = (Math.random() - 0.5) * 14;
         this.enemies.push(new Enemy(this.scene, x, z, Date.now()));
         this.spawnedCount++;
@@ -157,7 +337,7 @@ export class Level1 {
     update(delta) {
         // Update player
         const moveInput = this.controls.getMoveInput();
-        const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds);
+        const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds, this.obstacles);
         
         if (fell) {
             this.takeDamage(100);

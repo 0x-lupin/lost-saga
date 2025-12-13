@@ -442,7 +442,7 @@ export class Player {
     }
 
     
-    update(delta, moveInput, platforms, arenaBounds) {
+    update(delta, moveInput, platforms, arenaBounds, obstacles = []) {
         this.isMoving = moveInput.x !== 0 || moveInput.z !== 0;
         
         // Apply movement
@@ -472,6 +472,23 @@ export class Player {
                         this.isGrounded = true;
                     }
                 }
+            }
+        }
+        
+        // Obstacle collision (circular)
+        const playerRadius = 0.5;
+        for (const obs of obstacles) {
+            const dx = this.mesh.position.x - obs.x;
+            const dz = this.mesh.position.z - obs.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            const minDist = playerRadius + obs.radius;
+            
+            if (dist < minDist && dist > 0) {
+                // Push player out
+                const pushX = (dx / dist) * (minDist - dist);
+                const pushZ = (dz / dist) * (minDist - dist);
+                this.mesh.position.x += pushX;
+                this.mesh.position.z += pushZ;
             }
         }
         
