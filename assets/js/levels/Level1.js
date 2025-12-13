@@ -176,29 +176,16 @@ export class Level1 {
     
     takeDamage(amount) {
         const isDead = this.player.takeDamage(amount);
-        this.updateHealthBar();
-        
-        document.body.style.backgroundColor = '#ff0000';
-        setTimeout(() => document.body.style.backgroundColor = '#000', 100);
+        this.game.ui.updateHealth(this.player.health, this.player.maxHealth);
+        this.game.ui.showDamageFlash();
         
         if (isDead) {
             this.game.gameOver(this.score);
         }
     }
     
-    updateHealthBar() {
-        const health = this.player.health;
-        document.getElementById('health-fill').style.width = `${health}%`;
-        document.getElementById('health-text').textContent = Math.round(health);
-        
-        const fill = document.getElementById('health-fill');
-        if (health > 60) fill.style.background = 'linear-gradient(to bottom, #4ade80, #22c55e)';
-        else if (health > 30) fill.style.background = 'linear-gradient(to bottom, #fbbf24, #f59e0b)';
-        else fill.style.background = 'linear-gradient(to bottom, #f87171, #dc2626)';
-    }
-    
     updateScore() {
-        document.getElementById('score-value').textContent = this.score;
+        this.game.ui.updateScore(this.score);
     }
     
     levelComplete() {
@@ -211,8 +198,7 @@ export class Level1 {
         this.score = 0;
         this.killCount = 0;
         this.spawnedCount = 0;
-        this.updateHealthBar();
-        this.updateScore();
+        this.game.ui.reset();
         
         this.enemies.forEach(e => e.destroy());
         this.enemies = [];

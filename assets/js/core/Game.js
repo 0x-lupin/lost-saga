@@ -1,6 +1,7 @@
 // Game Core - Manages renderer, scene, camera, and game loop
 
 import { Controls } from '../controls.js';
+import { UI } from './UI.js';
 
 export class Game {
     constructor() {
@@ -8,6 +9,7 @@ export class Game {
         this.camera = null;
         this.renderer = null;
         this.controls = null;
+        this.ui = null;
         this.currentLevel = null;
         this.isRunning = false;
         this.clock = new THREE.Clock();
@@ -17,7 +19,8 @@ export class Game {
         this.setupCamera();
         this.setupLights();
         this.setupControls();
-        this.setupUI();
+        this.ui = new UI();
+        this.setupUIEvents();
     }
     
     setupRenderer() {
@@ -74,7 +77,7 @@ export class Game {
         this.controls = new Controls();
     }
     
-    setupUI() {
+    setupUIEvents() {
         document.getElementById('start-btn').addEventListener('click', () => this.startGame());
         document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
         document.getElementById('fullscreen-btn').addEventListener('click', () => this.toggleFullscreen());
@@ -82,7 +85,7 @@ export class Game {
     }
     
     nextLevel() {
-        document.getElementById('level-complete-screen').classList.add('hidden');
+        this.ui.hideLevelComplete();
         // For now, restart current level (Level 2 can be added later)
         if (this.currentLevel) {
             this.currentLevel.restart();
@@ -103,7 +106,7 @@ export class Game {
     }
     
     startGame() {
-        document.getElementById('start-screen').classList.add('hidden');
+        this.ui.hideStartScreen();
         this.isRunning = true;
         this.clock.start();
         if (this.currentLevel) {
@@ -115,7 +118,7 @@ export class Game {
         if (this.currentLevel) {
             this.currentLevel.restart();
         }
-        document.getElementById('game-over-screen').classList.add('hidden');
+        this.ui.hideGameOver();
         this.isRunning = true;
     }
     
@@ -133,14 +136,12 @@ export class Game {
     
     gameOver(score) {
         this.isRunning = false;
-        document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over-screen').classList.remove('hidden');
+        this.ui.showGameOver(score);
     }
     
     levelComplete(score) {
         this.isRunning = false;
-        document.getElementById('level-score').textContent = score;
-        document.getElementById('level-complete-screen').classList.remove('hidden');
+        this.ui.showLevelComplete(score);
     }
     
     onResize() {
