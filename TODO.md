@@ -1,5 +1,20 @@
 # Lost Saga - TODO List
 
+## Priority: CRITICAL (Technical Debt)
+
+### ~~0. Fix Character Y-Position System~~ ✅ DONE
+**Files:** `Player.js`, `Enemy.js`, collision logic
+
+**Fixed:**
+- Removed all `-1` offsets from Player.js (legGroup, torsoGroup, headGroup, leftArm, rightArm, shadowDisc)
+- Removed all `-1` offsets from Enemy.js (legGroup, torsoGroup, headGroup, leftArm, rightArm)
+- Changed collision: `mesh.position.y = b.y` instead of `b.y + 1`
+- Changed initial spawn: `mesh.position.set(x, 0, z)` instead of `(x, 1, z)`
+- Updated Enemy ground position from y=1 to y=0
+- Model feet now at local y=0, mesh.position.y=0 means standing on ground
+
+---
+
 ## Priority: High
 
 ### 1. Base Level Class

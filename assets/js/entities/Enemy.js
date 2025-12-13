@@ -50,7 +50,7 @@ export class Enemy {
         rightFoot.position.set(0.15, -0.55, 0.03);
         legGroup.add(rightFoot);
         
-        legGroup.position.y = 0.6 - 1; // Offset down so feet at local y=-1
+        legGroup.position.y = 0.6; // Feet at local y=0
         this.mesh.add(legGroup);
         this.legGroup = legGroup;
         
@@ -80,7 +80,7 @@ export class Enemy {
             torsoGroup.add(rib);
         }
         
-        torsoGroup.position.y = 1.2 - 1; // Offset down
+        torsoGroup.position.y = 1.2; // Torso position
         this.mesh.add(torsoGroup);
         
         // === ARMS ===
@@ -97,7 +97,7 @@ export class Enemy {
         leftHand.position.set(0, -0.65, 0);
         leftArmGroup.add(leftHand);
         
-        leftArmGroup.position.set(-0.4, 0.35, 0); // Offset down
+        leftArmGroup.position.set(-0.4, 1.35, 0); // Arm position
         leftArmGroup.rotation.x = -0.8; // Arms reaching forward
         this.mesh.add(leftArmGroup);
         this.leftArm = leftArmGroup;
@@ -115,7 +115,7 @@ export class Enemy {
         rightHand.position.set(0, -0.65, 0);
         rightArmGroup.add(rightHand);
         
-        rightArmGroup.position.set(0.4, 0.35, 0); // Offset down
+        rightArmGroup.position.set(0.4, 1.35, 0); // Arm position
         rightArmGroup.rotation.x = -0.8;
         this.mesh.add(rightArmGroup);
         this.rightArm = rightArmGroup;
@@ -176,12 +176,12 @@ export class Enemy {
         hair.position.set(-0.05, 0.28, -0.05);
         headGroup.add(hair);
         
-        headGroup.position.y = 0.75; // Offset down (1.75 - 1)
+        headGroup.position.y = 1.75; // Head position
         headGroup.rotation.z = 0.15; // Tilted head
         this.mesh.add(headGroup);
         this.headGroup = headGroup;
         
-        this.mesh.position.set(x, 1, z);
+        this.mesh.position.set(x, 0, z); // Feet at ground level y=0
         this.scene.add(this.mesh);
     }
     
@@ -228,7 +228,7 @@ export class Enemy {
         this.mesh.rotation.y = Math.atan2(direction.x, direction.z);
         
         // Keep on ground
-        this.mesh.position.y = 1;
+        this.mesh.position.y = 0;
         
         // Arena bounds
         this.mesh.position.x = Math.max(arenaBounds.minX, Math.min(arenaBounds.maxX, this.mesh.position.x));
@@ -319,7 +319,7 @@ export class Enemy {
             this.mesh.rotation.x = progress * (Math.PI / 2);
             
             // Sink into ground
-            this.mesh.position.y = 1 - progress * 1.5;
+            this.mesh.position.y = 0 - progress * 1.5;
             
             // Fade out (scale down)
             const scale = 1 - progress * 0.3;

@@ -3,6 +3,7 @@
 A comprehensive guide for developers (human or AI) to understand and extend this game.
 
 ## Table of Contents
+- [Development Principles](#development-principles)
 - [Platform Support](#platform-support)
 - [Project Structure](#project-structure)
 - [Game Flow](#game-flow)
@@ -11,6 +12,37 @@ A comprehensive guide for developers (human or AI) to understand and extend this
 - [Collision System](#collision-system)
 - [UI Elements](#ui-elements)
 - [Controls](#controls)
+
+---
+
+## Development Principles
+
+### NO Band-Aid Solutions
+- Every fix must address the root cause, not just the symptoms
+- Avoid magic numbers and hardcoded offsets that "just work"
+- If a workaround is needed temporarily, document it in TODO.md as CRITICAL priority
+- Code should be self-explanatory; if you need a comment like "offset to compensate for X", fix X instead
+
+### Scalable Architecture
+- All systems must be designed for extension (new levels, enemies, sounds, etc.)
+- Use registry patterns (like SoundManager) for pluggable components
+- Avoid tight coupling between classes
+- Configuration should be data-driven where possible (enemy stats, level configs)
+
+### Cross-Platform First (Mobile + PC)
+- **Every feature must work on both mobile and desktop**
+- Test touch controls alongside keyboard/mouse
+- UI elements must be responsive (use CSS media queries)
+- Touch targets must be large enough (minimum 44x44px)
+- Consider performance on mobile devices (reduce shadows, simplify geometry if needed)
+- Use `pointer` events when possible for unified input handling
+- Always test: iOS Safari, Android Chrome, Desktop Chrome/Firefox
+
+### Code Quality
+- Keep functions small and focused
+- Use meaningful variable names
+- Group related code together
+- Clean up resources in `destroy()` methods
 
 ---
 

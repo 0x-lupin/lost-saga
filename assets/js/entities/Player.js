@@ -65,7 +65,7 @@ export class Player {
         legGroup.add(rightBoot);
         this.rightBoot = rightBoot;
         
-        legGroup.position.y = 0.9 - 1; // Offset down so feet are at local y=-1
+        legGroup.position.y = 0.9; // Feet at local y=0
         this.mesh.add(legGroup);
         this.legGroup = legGroup;
         
@@ -130,7 +130,7 @@ export class Player {
         rightShoulder.castShadow = true;
         torsoGroup.add(rightShoulder);
         
-        torsoGroup.position.y = 1.5 - 1; // Offset down
+        torsoGroup.position.y = 1.5; // Torso position
         this.mesh.add(torsoGroup);
         this.torsoGroup = torsoGroup;
 
@@ -151,7 +151,7 @@ export class Player {
         leftGlove.position.set(0, -0.8, 0);
         leftArmGroup.add(leftGlove);
         
-        leftArmGroup.position.set(-0.5, 0.7, 0); // Offset down
+        leftArmGroup.position.set(-0.5, 1.7, 0); // Arm position
         this.mesh.add(leftArmGroup);
         this.leftArm = leftArmGroup;
         
@@ -176,7 +176,7 @@ export class Player {
         this.sword.rotation.x = Math.PI / 2.5; // Angled up and forward
         rightArmGroup.add(this.sword);
         
-        rightArmGroup.position.set(0.5, 0.7, 0); // Offset down
+        rightArmGroup.position.set(0.5, 1.7, 0); // Arm position
         this.mesh.add(rightArmGroup);
         this.rightArm = rightArmGroup;
         
@@ -283,7 +283,7 @@ export class Player {
         tail2.rotation.x = 0.5;
         headGroup.add(tail2);
         
-        headGroup.position.y = 2.2 - 1; // Offset down
+        headGroup.position.y = 2.2; // Head position
         this.mesh.add(headGroup);
         this.headGroup = headGroup;
         
@@ -296,12 +296,12 @@ export class Player {
         });
         const shadow = new THREE.Mesh(shadowGeo, shadowMat);
         shadow.rotation.x = -Math.PI / 2;
-        shadow.position.y = -0.98; // At feet level
+        shadow.position.y = 0.02; // At feet level (local y=0)
         this.mesh.add(shadow);
         this.shadowDisc = shadow;
         
-        // Set initial position
-        this.mesh.position.set(0, 1, 5);
+        // Set initial position (feet at ground level y=0)
+        this.mesh.position.set(0, 0, 5);
         this.scene.add(this.mesh);
     }
 
@@ -482,9 +482,9 @@ export class Player {
             const b = platform.bounds;
             if (this.mesh.position.x >= b.minX && this.mesh.position.x <= b.maxX &&
                 this.mesh.position.z >= b.minZ && this.mesh.position.z <= b.maxZ) {
-                if (this.mesh.position.y <= b.y + 1 && this.mesh.position.y >= b.y - 0.5) {
+                if (this.mesh.position.y <= b.y && this.mesh.position.y >= b.y - 1.5) {
                     if (this.velocity.y <= 0) {
-                        this.mesh.position.y = b.y + 1;
+                        this.mesh.position.y = b.y;
                         this.velocity.y = 0;
                         this.isGrounded = true;
                     }
@@ -546,7 +546,7 @@ export class Player {
             
             // Slight body bob
             if (this.torsoGroup) {
-                this.torsoGroup.position.y = 0.5 + Math.abs(Math.sin(this.animationTime * 2)) * 0.03;
+                this.torsoGroup.position.y = 1.5 + Math.abs(Math.sin(this.animationTime * 2)) * 0.03;
             }
         } else {
             // Idle - reset to neutral
@@ -557,7 +557,7 @@ export class Player {
             
             // Idle breathing
             if (this.torsoGroup) {
-                this.torsoGroup.position.y = 0.5 + Math.sin(this.animationTime * 0.5) * 0.02;
+                this.torsoGroup.position.y = 1.5 + Math.sin(this.animationTime * 0.5) * 0.02;
             }
         }
     }
@@ -613,7 +613,7 @@ export class Player {
     }
     
     reset() {
-        this.mesh.position.set(0, 1, 5);
+        this.mesh.position.set(0, 0, 5);
         this.velocity = { x: 0, y: 0, z: 0 };
         this.health = this.maxHealth;
         this.isGrounded = false;
