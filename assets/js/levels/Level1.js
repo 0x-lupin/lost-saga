@@ -124,21 +124,21 @@ export class Level1 {
                 const isDead = enemy.takeDamage(this.player.attackDamage, knockDir);
                 
                 if (isDead) {
-                    enemy.destroy();
                     this.enemies.splice(i, 1);
                     this.score += 100;
                     this.killCount++;
                     this.updateScore();
                     
-                    // Check level complete
-                    if (this.killCount >= this.totalEnemies) {
-                        this.levelComplete();
-                    } else if (this.spawnedCount < this.totalEnemies) {
-                        // Spawn new enemy if we haven't spawned all 10 yet
-                        setTimeout(() => {
-                            if (this.game.isRunning) this.spawnEnemy();
-                        }, 2000);
-                    }
+                    // Play death animation then check level complete
+                    enemy.die(() => {
+                        if (this.killCount >= this.totalEnemies) {
+                            this.levelComplete();
+                        } else if (this.spawnedCount < this.totalEnemies) {
+                            setTimeout(() => {
+                                if (this.game.isRunning) this.spawnEnemy();
+                            }, 1500);
+                        }
+                    });
                 }
             }
         }
@@ -166,6 +166,7 @@ export class Level1 {
         
         // Update enemies
         this.enemies.forEach(enemy => {
+            if (enemy.isDying) return;
             const distance = enemy.update(delta, playerPos, this.arenaBounds);
             if (distance < 1.8 && enemy.canAttack()) {
                 this.takeDamage(enemy.attack());
