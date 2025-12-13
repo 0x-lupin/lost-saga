@@ -16,7 +16,9 @@ export class Level1 {
         this.score = 0;
         
         // Level config
-        this.maxEnemies = 10;
+        this.totalEnemies = 10;
+        this.spawnedCount = 0;
+        this.killCount = 0;
         this.arenaBounds = { minX: -18, maxX: 18, minZ: -8, maxZ: 8 };
     }
     
@@ -84,8 +86,19 @@ export class Level1 {
             { x: 5, z: 3 }
         ];
         positions.forEach((pos, i) => {
-            this.enemies.push(new Enemy(this.scene, pos.x, pos.z, i));
+            if (this.spawnedCount < this.totalEnemies) {
+                this.enemies.push(new Enemy(this.scene, pos.x, pos.z, i));
+                this.spawnedCount++;
+            }
         });
+    }
+    
+    spawnEnemy() {
+        if (this.spawnedCount >= this.totalEnemies) return;
+        const x = (Math.random() - 0.5) * 30;
+        const z = (Math.random() - 0.5) * 14;
+        this.enemies.push(new Enemy(this.scene, x, z, Date.now()));
+        this.spawnedCount++;
     }
     
     bindControls() {
@@ -114,16 +127,18 @@ export class Level1 {
                     enemy.destroy();
                     this.enemies.splice(i, 1);
                     this.score += 100;
+                    this.killCount++;
                     this.updateScore();
                     
-                    // Respawn if under limit
-                    setTimeout(() => {
-                        if (this.game.isRunning && this.enemies.length < this.maxEnemies) {
-                            const x = (Math.random() - 0.5) * 30;
-                            const z = (Math.random() - 0.5) * 14;
-                            this.enemies.push(new Enemy(this.scene, x, z, Date.now()));
-                        }
-                    }, 3000);
+                    // Check level complete
+                    if (this.killCount >= this.totalEnemies) {
+                        this.levelComplete();
+                    } else if (this.spawnedCount < this.totalEnemies) {
+                        // Spawn new enemy if we haven't spawned all 10 yet
+                        setTimeout(() => {
+                            if (this.game.isRunning) this.spawnEnemy();
+                        }, 2000);
+                    }
                 }
             }
         }
@@ -185,9 +200,16 @@ export class Level1 {
         document.getElementById('score-value').textContent = this.score;
     }
     
+    levelComplete() {
+        this.game.isRunning = false;
+        this.game.levelComplete(this.score);
+    }
+    
     restart() {
         this.player.reset();
         this.score = 0;
+        this.killCount = 0;
+        this.spawnedCount = 0;
         this.updateHealthBar();
         this.updateScore();
         

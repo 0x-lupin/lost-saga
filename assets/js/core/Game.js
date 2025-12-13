@@ -78,6 +78,16 @@ export class Game {
         document.getElementById('start-btn').addEventListener('click', () => this.startGame());
         document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
         document.getElementById('fullscreen-btn').addEventListener('click', () => this.toggleFullscreen());
+        document.getElementById('next-btn').addEventListener('click', () => this.nextLevel());
+    }
+    
+    nextLevel() {
+        document.getElementById('level-complete-screen').classList.add('hidden');
+        // For now, restart current level (Level 2 can be added later)
+        if (this.currentLevel) {
+            this.currentLevel.restart();
+        }
+        this.isRunning = true;
     }
     
     loadLevel(LevelClass) {
@@ -125,6 +135,12 @@ export class Game {
         this.isRunning = false;
         document.getElementById('final-score').textContent = score;
         document.getElementById('game-over-screen').classList.remove('hidden');
+    }
+    
+    levelComplete(score) {
+        this.isRunning = false;
+        document.getElementById('level-score').textContent = score;
+        document.getElementById('level-complete-screen').classList.remove('hidden');
     }
     
     onResize() {

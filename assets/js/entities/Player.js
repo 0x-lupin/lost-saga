@@ -168,8 +168,8 @@ export class Player {
         
         // Sword attached to right hand - rotated to point FORWARD (+Z)
         this.sword = this.createSword();
-        this.sword.position.set(0, -0.75, 0.1);
-        this.sword.rotation.x = Math.PI / 2; // Rotate 90 degrees so blade points forward
+        this.sword.position.set(0, -0.5, 0.15);
+        this.sword.rotation.x = Math.PI / 2.5; // Angled up and forward
         rightArmGroup.add(this.sword);
         
         rightArmGroup.position.set(0.5, 1.7, 0);

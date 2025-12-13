@@ -159,9 +159,10 @@ body {
     background: rgba(100, 200, 255, 0.8);
 }
 
-/* Start/Game Over Screens */
+/* Start/Game Over/Level Complete Screens */
 #start-screen,
-#game-over-screen {
+#game-over-screen,
+#level-complete-screen {
     position: absolute;
     top: 0;
     left: 0;
@@ -177,7 +178,8 @@ body {
 }
 
 #start-screen h1,
-#game-over-screen h1 {
+#game-over-screen h1,
+#level-complete-screen h1 {
     font-size: 3rem;
     margin-bottom: 10px;
     text-shadow: 0 0 20px #f97316, 0 0 40px #f97316;
@@ -191,7 +193,8 @@ body {
 }
 
 #start-btn,
-#restart-btn {
+#restart-btn,
+#next-btn {
     padding: 15px 50px;
     font-size: 1.3rem;
     font-weight: bold;
@@ -204,8 +207,13 @@ body {
     margin-bottom: 20px;
 }
 
+#next-btn {
+    background: linear-gradient(to bottom, #22c55e, #16a34a);
+}
+
 #start-btn:hover,
-#restart-btn:hover {
+#restart-btn:hover,
+#next-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 0 20px rgba(249, 115, 22, 0.6);
 }
