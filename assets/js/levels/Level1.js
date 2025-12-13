@@ -308,33 +308,49 @@ export class Level1 {
     handleAttack() {
         const playerPos = this.player.getPosition();
         const attackRange = this.player.getAttackRange();
+        const playerRotation = this.player.mesh.rotation.y;
         
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
-            const distance = playerPos.distanceTo(enemy.getPosition());
+            const enemyPos = enemy.getPosition();
+            const distance = playerPos.distanceTo(enemyPos);
             
+            // Check if enemy is within range AND in front of player (within 120 degree arc)
             if (distance < attackRange) {
-                const knockDir = new THREE.Vector3().subVectors(enemy.getPosition(), playerPos).normalize();
-                const isDead = enemy.takeDamage(this.player.attackDamage, knockDir);
-                this.game.sound.playVaried('hit', 0.1);
+                // Calculate angle to enemy
+                const toEnemy = new THREE.Vector3().subVectors(enemyPos, playerPos);
+                const angleToEnemy = Math.atan2(toEnemy.x, toEnemy.z);
                 
-                if (isDead) {
-                    this.enemies.splice(i, 1);
-                    this.score += 100;
-                    this.killCount++;
-                    this.updateScore();
-                    this.game.sound.playVaried('enemyDeath', 0.15);
+                // Calculate angle difference (normalize to -PI to PI)
+                let angleDiff = angleToEnemy - playerRotation;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                
+                // Only hit if within 60 degrees of facing direction (120 degree arc total)
+                const attackArc = Math.PI / 3; // 60 degrees each side = 120 degree arc
+                if (Math.abs(angleDiff) < attackArc) {
+                    const knockDir = new THREE.Vector3().subVectors(enemyPos, playerPos).normalize();
+                    const isDead = enemy.takeDamage(this.player.attackDamage, knockDir);
+                    this.game.sound.playVaried('hit', 0.1);
                     
-                    // Play death animation then check level complete
-                    enemy.die(() => {
-                        if (this.killCount >= this.totalEnemies) {
-                            this.levelComplete();
-                        } else if (this.spawnedCount < this.totalEnemies) {
-                            setTimeout(() => {
-                                if (this.game.isRunning) this.spawnEnemy();
-                            }, 1500);
-                        }
-                    });
+                    if (isDead) {
+                        this.enemies.splice(i, 1);
+                        this.score += 100;
+                        this.killCount++;
+                        this.updateScore();
+                        this.game.sound.playVaried('enemyDeath', 0.15);
+                        
+                        // Play death animation then check level complete
+                        enemy.die(() => {
+                            if (this.killCount >= this.totalEnemies) {
+                                this.levelComplete();
+                            } else if (this.spawnedCount < this.totalEnemies) {
+                                setTimeout(() => {
+                                    if (this.game.isRunning) this.spawnEnemy();
+                                }, 1500);
+                            }
+                        });
+                    }
                 }
             }
         }

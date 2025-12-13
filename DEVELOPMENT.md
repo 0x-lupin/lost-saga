@@ -44,6 +44,15 @@ A comprehensive guide for developers (human or AI) to understand and extend this
 - Group related code together
 - Clean up resources in `destroy()` methods
 
+### Acceptable Patterns (NOT Band-Aids)
+The following are intentional design choices, not workarounds:
+
+- **setTimeout for animations**: Used for attack swings, damage flashes, respawn delays. This is standard practice for simple timed events - the browser handles timing reliably, and it keeps code simple and readable.
+- **Hardcoded values in classes**: Stats like `health`, `speed`, `attackDamage` are defined at the top of each class. This is appropriate for a game this size.
+- **requestAnimationFrame in death animations**: Enemy death uses its own animation loop - this is fine for one-off effects.
+
+**What IS a band-aid**: Adding offsets/hacks to compensate for a bug elsewhere (e.g., adding `-1` to all model positions because collision math was wrong). If you find yourself writing "offset to fix X", fix X instead.
+
 ---
 
 ## Platform Support
