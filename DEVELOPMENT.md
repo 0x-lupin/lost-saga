@@ -25,8 +25,16 @@ lost-saga/
 │       ├── entities/
 │       │   ├── Player.js      # Player character with sword, animations
 │       │   └── Enemy.js       # Zombie enemy with animations
-│       └── levels/
-│           └── Level1.js      # Training Grounds level
+│       ├── levels/
+│       │   └── Level1.js      # Training Grounds level
+│       └── sounds/
+│           ├── SoundManager.js    # Audio system (registry pattern)
+│           ├── index.js           # Sound registry (add new sounds here)
+│           ├── sfx/               # Sound effects (one file per sound)
+│           │   ├── swing.js, hit.js, jump.js, playerHurt.js,
+│           │   ├── enemyDeath.js, levelComplete.js, gameOver.js
+│           └── music/             # Background music (one file per track)
+│               └── bgm.js
 ```
 
 ## How It Works
@@ -101,6 +109,42 @@ this.controls.onSpecial = () => {
 - `gameOver(score)` - Show game over screen
 - `levelComplete(score)` - Show level complete screen
 - `nextLevel()` - Called when "NEXT" button clicked
+
+### SoundManager.js (access via `game.sound`)
+Procedural audio using Web Audio API - no audio files needed!
+
+- `play(name)` - Play registered SFX
+- `playVaried(name, variation)` - Play with random pitch variation
+- `playMusic(name)` - Play registered background music
+- `stopMusic()` / `fadeOutMusic(duration)` - Stop/fade music
+- `setMusicVolume(0-1)` / `setSfxVolume(0-1)` - Volume controls
+- `toggleMute()` - Toggle all audio
+- `registerSfx(name, fn)` / `registerMusic(name, module)` - Register new sounds
+
+### Adding New Sounds (Scalable Pattern)
+
+1. Create SFX file `sounds/sfx/mySound.js`:
+```javascript
+export default function mySound(ctx, output, pitch = 1) {
+    // Web Audio API code here
+}
+```
+
+2. Create music file `sounds/music/myMusic.js`:
+```javascript
+function play(ctx, output) { /* return state */ }
+function stop(state) { /* cleanup */ }
+export default { play, stop };
+```
+
+3. Register in `sounds/index.js`:
+```javascript
+import mySound from './sfx/mySound.js';
+import myMusic from './music/myMusic.js';
+// In registerAllSounds():
+sound.registerSfx('mySound', mySound);
+sound.registerMusic('myMusic', myMusic);
+```
 
 ### UI.js (access via `game.ui`)
 - `updateHealth(health, maxHealth)` - Update health bar with color coding

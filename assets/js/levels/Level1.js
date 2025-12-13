@@ -103,10 +103,13 @@ export class Level1 {
     
     bindControls() {
         this.controls.onJump = () => {
-            if (this.game.isRunning) this.player.jump();
+            if (this.game.isRunning && this.player.jump()) {
+                this.game.sound.playVaried('jump', 0.15);
+            }
         };
         this.controls.onAttack = () => {
             if (!this.game.isRunning) return;
+            this.game.sound.playVaried('swing', 0.1);
             this.player.attack(() => this.handleAttack());
         };
     }
@@ -122,12 +125,14 @@ export class Level1 {
             if (distance < attackRange) {
                 const knockDir = new THREE.Vector3().subVectors(enemy.getPosition(), playerPos).normalize();
                 const isDead = enemy.takeDamage(this.player.attackDamage, knockDir);
+                this.game.sound.playVaried('hit', 0.1);
                 
                 if (isDead) {
                     this.enemies.splice(i, 1);
                     this.score += 100;
                     this.killCount++;
                     this.updateScore();
+                    this.game.sound.playVaried('enemyDeath', 0.15);
                     
                     // Play death animation then check level complete
                     enemy.die(() => {
@@ -145,7 +150,8 @@ export class Level1 {
     }
     
     onStart() {
-        // Called when game starts
+        // Start procedural background music
+        this.game.sound.playMusic('bgm');
     }
     
     update(delta) {
@@ -178,6 +184,7 @@ export class Level1 {
         const isDead = this.player.takeDamage(amount);
         this.game.ui.updateHealth(this.player.health, this.player.maxHealth);
         this.game.ui.showDamageFlash();
+        this.game.sound.playVaried('playerHurt', 0.1);
         
         if (isDead) {
             this.game.gameOver(this.score);
@@ -203,6 +210,9 @@ export class Level1 {
         this.enemies.forEach(e => e.destroy());
         this.enemies = [];
         this.spawnEnemies();
+        
+        // Restart music
+        this.game.sound.playMusic('bgm');
     }
     
     destroy() {

@@ -342,34 +342,34 @@ export class Player {
         const swordGroup = new THREE.Group();
         
         // Blade - using BoxGeometry for cleaner look, pointing UP (+Y)
-        const bladeGeo = new THREE.BoxGeometry(0.08, 1.2, 0.025);
+        const bladeGeo = new THREE.BoxGeometry(0.08, 1.8, 0.025);
         const bladeMat = new THREE.MeshStandardMaterial({ 
             color: 0xe5e7eb,
             metalness: 0.9,
             roughness: 0.1
         });
         const blade = new THREE.Mesh(bladeGeo, bladeMat);
-        blade.position.y = 0.75; // Blade extends upward from guard
+        blade.position.y = 1.05; // Blade extends upward from guard
         blade.castShadow = true;
         swordGroup.add(blade);
         
         // Blade tip (pointed)
-        const tipGeo = new THREE.ConeGeometry(0.04, 0.2, 4);
+        const tipGeo = new THREE.ConeGeometry(0.04, 0.25, 4);
         const tip = new THREE.Mesh(tipGeo, bladeMat);
-        tip.position.y = 1.45;
+        tip.position.y = 2.1;
         tip.rotation.y = Math.PI / 4;
         tip.castShadow = true;
         swordGroup.add(tip);
         
         // Blade edge glow (on the front edge)
-        const edgeGeo = new THREE.BoxGeometry(0.01, 1.2, 0.03);
+        const edgeGeo = new THREE.BoxGeometry(0.01, 1.8, 0.03);
         const edgeMat = new THREE.MeshStandardMaterial({ 
             color: 0x60a5fa,
             emissive: 0x3b82f6,
             emissiveIntensity: 0.5
         });
         const edge = new THREE.Mesh(edgeGeo, edgeMat);
-        edge.position.set(0, 0.75, 0.02);
+        edge.position.set(0, 1.05, 0.02);
         swordGroup.add(edge);
         
         // Guard (crossguard)
@@ -591,6 +591,6 @@ export class Player {
     }
     
     getAttackRange() {
-        return 2.5;
+        return 3.5;
     }
 }

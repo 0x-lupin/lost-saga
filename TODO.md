@@ -77,14 +77,18 @@ Level-specific config should stay in each Level class.
 - `getPlatforms()` - return platform collision data
 - `getBounds()` - return arena bounds
 
-### 6. Add Sound Manager
+### 6. ~~Add Sound Manager~~ ✅ DONE
 **File:** `core/SoundManager.js`
 **Features:**
-- Background music
-- Attack sounds
-- Hit sounds
-- Death sounds
-- UI sounds
+- Procedural sound generation (no audio files needed!)
+- Background music (8-bit style looping melody)
+- SFX: swing (whoosh), hit (thud), enemy death, player hurt, jump
+- Level complete fanfare / game over melody
+- Volume controls (music/sfx separate)
+- Mute toggle
+- `playVaried()` for random pitch variation
+
+**Usage:** Access via `this.game.sound` in levels
 
 ### 7. Add Particle Effects
 **File:** `core/Particles.js`
@@ -192,6 +196,7 @@ levels/Level3.js
 ### Files CREATED:
 ```
 core/UI.js ✅
+core/SoundManager.js ✅
 ```
 
 ### Files to MODIFY:

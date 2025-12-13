@@ -2,6 +2,8 @@
 
 import { Controls } from '../controls.js';
 import { UI } from './UI.js';
+import { SoundManager } from '../sounds/SoundManager.js';
+import { registerAllSounds } from '../sounds/index.js';
 
 export class Game {
     constructor() {
@@ -10,6 +12,7 @@ export class Game {
         this.renderer = null;
         this.controls = null;
         this.ui = null;
+        this.sound = null;
         this.currentLevel = null;
         this.isRunning = false;
         this.clock = new THREE.Clock();
@@ -20,6 +23,8 @@ export class Game {
         this.setupLights();
         this.setupControls();
         this.ui = new UI();
+        this.sound = new SoundManager();
+        registerAllSounds(this.sound);
         this.setupUIEvents();
     }
     
@@ -106,6 +111,10 @@ export class Game {
     }
     
     startGame() {
+        // Initialize audio on user interaction
+        this.sound.init();
+        this.sound.resume();
+        
         this.ui.hideStartScreen();
         this.isRunning = true;
         this.clock.start();
@@ -136,11 +145,15 @@ export class Game {
     
     gameOver(score) {
         this.isRunning = false;
+        this.sound.play('gameOver');
+        this.sound.fadeOutMusic(1);
         this.ui.showGameOver(score);
     }
     
     levelComplete(score) {
         this.isRunning = false;
+        this.sound.play('levelComplete');
+        this.sound.fadeOutMusic(1);
         this.ui.showLevelComplete(score);
     }
     
