@@ -30,11 +30,13 @@ export class Player {
         // Left leg
         const leftLegUpper = this.createLimb(0.22, 0.45, 0.22, 0x1e3a5f);
         leftLegUpper.position.set(-0.18, -0.22, 0);
+        leftLegUpper.castShadow = true;
         legGroup.add(leftLegUpper);
         this.leftLegUpper = leftLegUpper;
         
         const leftLegLower = this.createLimb(0.18, 0.4, 0.18, 0x162d4d);
         leftLegLower.position.set(-0.18, -0.62, 0);
+        leftLegLower.castShadow = true;
         legGroup.add(leftLegLower);
         this.leftLegLower = leftLegLower;
         
@@ -47,11 +49,13 @@ export class Player {
         // Right leg
         const rightLegUpper = this.createLimb(0.22, 0.45, 0.22, 0x1e3a5f);
         rightLegUpper.position.set(0.18, -0.22, 0);
+        rightLegUpper.castShadow = true;
         legGroup.add(rightLegUpper);
         this.rightLegUpper = rightLegUpper;
         
         const rightLegLower = this.createLimb(0.18, 0.4, 0.18, 0x162d4d);
         rightLegLower.position.set(0.18, -0.62, 0);
+        rightLegLower.castShadow = true;
         legGroup.add(rightLegLower);
         this.rightLegLower = rightLegLower;
         
@@ -61,7 +65,7 @@ export class Player {
         legGroup.add(rightBoot);
         this.rightBoot = rightBoot;
         
-        legGroup.position.y = 0.9;
+        legGroup.position.y = 0.9 - 1; // Offset down so feet are at local y=-1
         this.mesh.add(legGroup);
         this.legGroup = legGroup;
         
@@ -126,7 +130,7 @@ export class Player {
         rightShoulder.castShadow = true;
         torsoGroup.add(rightShoulder);
         
-        torsoGroup.position.y = 1.5;
+        torsoGroup.position.y = 1.5 - 1; // Offset down
         this.mesh.add(torsoGroup);
         this.torsoGroup = torsoGroup;
 
@@ -147,7 +151,7 @@ export class Player {
         leftGlove.position.set(0, -0.8, 0);
         leftArmGroup.add(leftGlove);
         
-        leftArmGroup.position.set(-0.5, 1.7, 0);
+        leftArmGroup.position.set(-0.5, 0.7, 0); // Offset down
         this.mesh.add(leftArmGroup);
         this.leftArm = leftArmGroup;
         
@@ -172,7 +176,7 @@ export class Player {
         this.sword.rotation.x = Math.PI / 2.5; // Angled up and forward
         rightArmGroup.add(this.sword);
         
-        rightArmGroup.position.set(0.5, 1.7, 0);
+        rightArmGroup.position.set(0.5, 0.7, 0); // Offset down
         this.mesh.add(rightArmGroup);
         this.rightArm = rightArmGroup;
         
@@ -279,9 +283,22 @@ export class Player {
         tail2.rotation.x = 0.5;
         headGroup.add(tail2);
         
-        headGroup.position.y = 2.2;
+        headGroup.position.y = 2.2 - 1; // Offset down
         this.mesh.add(headGroup);
         this.headGroup = headGroup;
+        
+        // Shadow disc at feet (for cleaner ground shadow)
+        const shadowGeo = new THREE.CircleGeometry(0.5, 16);
+        const shadowMat = new THREE.MeshBasicMaterial({ 
+            color: 0x000000, 
+            transparent: true, 
+            opacity: 0.3 
+        });
+        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+        shadow.rotation.x = -Math.PI / 2;
+        shadow.position.y = -0.98; // At feet level
+        this.mesh.add(shadow);
+        this.shadowDisc = shadow;
         
         // Set initial position
         this.mesh.position.set(0, 1, 5);
@@ -529,7 +546,7 @@ export class Player {
             
             // Slight body bob
             if (this.torsoGroup) {
-                this.torsoGroup.position.y = 1.5 + Math.abs(Math.sin(this.animationTime * 2)) * 0.03;
+                this.torsoGroup.position.y = 0.5 + Math.abs(Math.sin(this.animationTime * 2)) * 0.03;
             }
         } else {
             // Idle - reset to neutral
@@ -540,7 +557,7 @@ export class Player {
             
             // Idle breathing
             if (this.torsoGroup) {
-                this.torsoGroup.position.y = 1.5 + Math.sin(this.animationTime * 0.5) * 0.02;
+                this.torsoGroup.position.y = 0.5 + Math.sin(this.animationTime * 0.5) * 0.02;
             }
         }
     }

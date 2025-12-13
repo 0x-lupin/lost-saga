@@ -50,7 +50,7 @@ export class Enemy {
         rightFoot.position.set(0.15, -0.55, 0.03);
         legGroup.add(rightFoot);
         
-        legGroup.position.y = 0.6;
+        legGroup.position.y = 0.6 - 1; // Offset down so feet at local y=-1
         this.mesh.add(legGroup);
         this.legGroup = legGroup;
         
@@ -80,7 +80,7 @@ export class Enemy {
             torsoGroup.add(rib);
         }
         
-        torsoGroup.position.y = 1.2;
+        torsoGroup.position.y = 1.2 - 1; // Offset down
         this.mesh.add(torsoGroup);
         
         // === ARMS ===
@@ -97,7 +97,7 @@ export class Enemy {
         leftHand.position.set(0, -0.65, 0);
         leftArmGroup.add(leftHand);
         
-        leftArmGroup.position.set(-0.4, 1.35, 0);
+        leftArmGroup.position.set(-0.4, 0.35, 0); // Offset down
         leftArmGroup.rotation.x = -0.8; // Arms reaching forward
         this.mesh.add(leftArmGroup);
         this.leftArm = leftArmGroup;
@@ -115,7 +115,7 @@ export class Enemy {
         rightHand.position.set(0, -0.65, 0);
         rightArmGroup.add(rightHand);
         
-        rightArmGroup.position.set(0.4, 1.35, 0);
+        rightArmGroup.position.set(0.4, 0.35, 0); // Offset down
         rightArmGroup.rotation.x = -0.8;
         this.mesh.add(rightArmGroup);
         this.rightArm = rightArmGroup;
@@ -176,7 +176,7 @@ export class Enemy {
         hair.position.set(-0.05, 0.28, -0.05);
         headGroup.add(hair);
         
-        headGroup.position.y = 1.75;
+        headGroup.position.y = 0.75; // Offset down (1.75 - 1)
         headGroup.rotation.z = 0.15; // Tilted head
         this.mesh.add(headGroup);
         this.headGroup = headGroup;
