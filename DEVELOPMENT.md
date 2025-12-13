@@ -1,12 +1,31 @@
 # Lost Saga - Development Guide
 
-## Platform Support
-- **Desktop:** Keyboard (WASD) + Mouse click to attack
-- **Mobile/Tablet:** Virtual joystick + touch buttons (JUMP, ATK)
-- **Fullscreen:** Button in top-right corner (works on both platforms)
+A comprehensive guide for developers (human or AI) to understand and extend this game.
 
-Mobile controls are in `index.html` (#mobile-controls) and handled in `controls.js`.
-CSS hides mobile controls on desktop via media query in `style.css`.
+## Table of Contents
+- [Platform Support](#platform-support)
+- [Project Structure](#project-structure)
+- [Game Flow](#game-flow)
+- [Key Classes Reference](#key-classes-reference)
+- [How To: Add New Content](#how-to-add-new-content)
+- [Collision System](#collision-system)
+- [UI Elements](#ui-elements)
+- [Controls](#controls)
+
+---
+
+## Platform Support
+
+| Platform | Controls |
+|----------|----------|
+| Desktop | WASD + Mouse click to attack |
+| Mobile/Tablet | Virtual joystick + JUMP/ATK buttons |
+| Fullscreen | Button in top-right corner |
+
+Mobile controls: `index.html` (#mobile-controls) + `controls.js`
+CSS hides mobile controls on desktop via `@media` query in `style.css`
+
+---
 
 ## Project Structure
 
@@ -20,34 +39,113 @@ lost-saga/
 │       ├── main.js            # Entry point - loads Game and Level1
 │       ├── controls.js        # Keyboard + mobile joystick/buttons
 │       ├── core/
-│       │   ├── Game.js        # Game engine (renderer, scene, camera, lights, game loop)
-│       │   └── UI.js          # UI manager (health, score, screens, damage flash)
+│       │   ├── Game.js        # Game engine (renderer, scene, camera, game loop)
+│       │   └── UI.js          # UI manager (health, score, screens)
 │       ├── entities/
 │       │   ├── Player.js      # Player character with sword, animations
-│       │   └── Enemy.js       # Zombie enemy with animations
+│       │   └── Enemy.js       # Zombie enemy with AI, animations
 │       ├── levels/
-│       │   └── Level1.js      # Training Grounds level
+│       │   └── Level1.js      # Training Grounds (environment + game logic)
 │       └── sounds/
 │           ├── SoundManager.js    # Audio system (registry pattern)
-│           ├── index.js           # Sound registry (add new sounds here)
-│           ├── sfx/               # Sound effects (one file per sound)
-│           │   ├── swing.js, hit.js, jump.js, playerHurt.js,
-│           │   ├── enemyDeath.js, levelComplete.js, gameOver.js
-│           └── music/             # Background music (one file per track)
-│               └── bgm.js
+│           ├── index.js           # Sound registry - ADD NEW SOUNDS HERE
+│           ├── sfx/               # One file per sound effect
+│           └── music/             # One file per music track
 ```
 
-## How It Works
+---
 
-### Game Flow
-1. `main.js` creates `Game` instance
-2. `Game` sets up Three.js (renderer, scene, camera, lights)
-3. `Game.loadLevel(Level1)` instantiates and initializes Level1
-4. `Game.start()` begins the animation loop
-5. User clicks "START GAME" → `Game.startGame()` → `isRunning = true`
-6. Game loop calls `currentLevel.update(delta)` every frame
+## Game Flow
 
-### Adding a New Level
+```
+1. main.js creates Game instance
+2. Game sets up Three.js (renderer, scene, camera, lights)
+3. Game.loadLevel(Level1) → Level1.init()
+4. Game.start() → animation loop begins
+5. User clicks "START GAME" → Game.startGame() → isRunning = true
+6. Every frame: Level1.update(delta) is called
+7. Kill all enemies → Level1.levelComplete() → Game.levelComplete(score)
+```
+
+---
+
+## Key Classes Reference
+
+### Game.js
+Core engine. Access in levels via `this.game`.
+
+| Property/Method | Description |
+|-----------------|-------------|
+| `scene` | Three.js scene |
+| `camera` | Three.js camera |
+| `ui` | UI manager instance |
+| `sound` | SoundManager instance |
+| `isRunning` | Game state flag |
+| `loadLevel(LevelClass)` | Load a level |
+| `startGame()` | Start the game |
+| `restartGame()` | Restart current level |
+| `gameOver(score)` | Show game over screen |
+| `levelComplete(score)` | Show level complete screen |
+
+### Level (interface)
+Every level must implement:
+
+```javascript
+constructor(game)     // Store game reference, init config
+init()                // Create environment, player, enemies, bind controls
+onStart()             // Called when game starts (play music, etc.)
+update(delta)         // Called every frame
+restart()             // Reset level state
+destroy()             // Cleanup when switching levels
+```
+
+### Player.js
+| Method | Description |
+|--------|-------------|
+| `update(delta, moveInput, platforms, arenaBounds, obstacles)` | Movement, physics, collision |
+| `jump()` | Jump if grounded, returns success |
+| `attack(callback)` | Swing sword, callback for hit detection |
+| `takeDamage(amount)` | Returns true if dead |
+| `reset()` | Reset position, health, state |
+| `getPosition()` | Returns mesh.position |
+| `getAttackRange()` | Returns attack range (3.5) |
+
+### Enemy.js
+| Method | Description |
+|--------|-------------|
+| `update(delta, playerPos, arenaBounds)` | AI movement, returns distance |
+| `canAttack()` | Returns true if can attack |
+| `attack()` | Attack animation, returns damage |
+| `takeDamage(amount, knockbackDir)` | Returns true if dead |
+| `die(callback)` | Death animation, then callback |
+
+### UI.js (access via `game.ui`)
+| Method | Description |
+|--------|-------------|
+| `updateHealth(health, maxHealth)` | Update health bar |
+| `updateScore(score)` | Update score display |
+| `showDamageFlash()` | Red screen flash |
+| `showGameOver(score)` | Show game over |
+| `showLevelComplete(score)` | Show level complete |
+| `reset()` | Reset to defaults |
+
+### SoundManager.js (access via `game.sound`)
+| Method | Description |
+|--------|-------------|
+| `play(name)` | Play SFX |
+| `playVaried(name, variation)` | Play with pitch variation |
+| `playMusic(name)` | Play background music |
+| `stopMusic()` | Stop music |
+| `fadeOutMusic(duration)` | Fade out music |
+| `setMusicVolume(0-1)` | Set music volume |
+| `setSfxVolume(0-1)` | Set SFX volume |
+| `toggleMute()` | Toggle mute |
+
+---
+
+## How To: Add New Content
+
+### Add a New Level
 
 1. Create `levels/Level2.js`:
 ```javascript
@@ -60,147 +158,158 @@ export class Level2 {
         this.scene = game.scene;
         this.camera = game.camera;
         this.controls = game.controls;
-        // ... your level config
+        
+        this.player = null;
+        this.enemies = [];
+        this.platforms = [];
+        this.obstacles = [];  // For collision
+        this.score = 0;
+        
+        // Level config
+        this.totalEnemies = 15;
+        this.arenaBounds = { minX: -20, maxX: 20, minZ: -12, maxZ: 12 };
     }
     
-    init() { /* create environment, player, enemies, bind controls */ }
-    onStart() { /* called when game starts */ }
-    update(delta) { /* called every frame */ }
-    restart() { /* reset level state */ }
-    destroy() { /* cleanup when switching levels */ }
+    init() {
+        this.createEnvironment();
+        this.createPlayer();
+        this.spawnEnemies();
+        this.bindControls();
+    }
+    
+    createEnvironment() {
+        // Your unique environment here
+    }
+    
+    // ... implement other required methods
 }
 ```
 
-2. Update `main.js` or `Game.js` to load Level2 after Level1 completes
+2. Update `Game.js` `nextLevel()` to load Level2
 
-### Adding a New Enemy Type
+### Add a New Enemy Type
 
 1. Create `entities/Skeleton.js` (copy Enemy.js as template)
-2. Modify `create()` method for different appearance
+2. Modify `create()` for different appearance
 3. Adjust stats: `health`, `speed`, `attackDamage`
-4. Import in your level: `import { Skeleton } from '../entities/Skeleton.js'`
+4. Import in level: `import { Skeleton } from '../entities/Skeleton.js'`
 
-### Adding New Player Abilities
+### Add a New Sound Effect
 
-In `Player.js`:
-```javascript
-// Add new method
-specialAttack(callback) {
-    if (this.isAttacking) return false;
-    // animation logic
-    // call callback() when hit should register
-}
-```
-
-In level's `bindControls()`:
-```javascript
-this.controls.onSpecial = () => {
-    this.player.specialAttack(() => this.handleSpecialAttack());
-};
-```
-
-## Key Classes Reference
-
-### Game.js
-- `ui` - UI manager instance (access via `this.game.ui` in levels)
-- `loadLevel(LevelClass)` - Load a level class
-- `startGame()` - Hide start screen, begin game
-- `restartGame()` - Restart current level
-- `gameOver(score)` - Show game over screen
-- `levelComplete(score)` - Show level complete screen
-- `nextLevel()` - Called when "NEXT" button clicked
-
-### SoundManager.js (access via `game.sound`)
-Procedural audio using Web Audio API - no audio files needed!
-
-- `play(name)` - Play registered SFX
-- `playVaried(name, variation)` - Play with random pitch variation
-- `playMusic(name)` - Play registered background music
-- `stopMusic()` / `fadeOutMusic(duration)` - Stop/fade music
-- `setMusicVolume(0-1)` / `setSfxVolume(0-1)` - Volume controls
-- `toggleMute()` - Toggle all audio
-- `registerSfx(name, fn)` / `registerMusic(name, module)` - Register new sounds
-
-### Adding New Sounds (Scalable Pattern)
-
-1. Create SFX file `sounds/sfx/mySound.js`:
+1. Create `sounds/sfx/mySound.js`:
 ```javascript
 export default function mySound(ctx, output, pitch = 1) {
-    // Web Audio API code here
+    const now = ctx.currentTime;
+    
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 440 * pitch;
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    
+    osc.connect(gain);
+    gain.connect(output);
+    osc.start(now);
+    osc.stop(now + 0.2);
 }
 ```
 
-2. Create music file `sounds/music/myMusic.js`:
+2. Register in `sounds/index.js`:
 ```javascript
-function play(ctx, output) { /* return state */ }
-function stop(state) { /* cleanup */ }
+import mySound from './sfx/mySound.js';
+// In registerAllSounds():
+sound.registerSfx('mySound', mySound);
+```
+
+3. Use anywhere: `this.game.sound.play('mySound')`
+
+### Add New Background Music
+
+1. Create `sounds/music/dungeonBgm.js`:
+```javascript
+function play(ctx, output) {
+    // Your music loop logic
+    // Return state object for stop()
+    return { timeout: null, stopped: false };
+}
+
+function stop(state) {
+    state.stopped = true;
+    if (state.timeout) clearTimeout(state.timeout);
+}
+
 export default { play, stop };
 ```
 
-3. Register in `sounds/index.js`:
+2. Register in `sounds/index.js`:
 ```javascript
-import mySound from './sfx/mySound.js';
-import myMusic from './music/myMusic.js';
-// In registerAllSounds():
-sound.registerSfx('mySound', mySound);
-sound.registerMusic('myMusic', myMusic);
+import dungeonBgm from './music/dungeonBgm.js';
+sound.registerMusic('dungeonBgm', dungeonBgm);
 ```
 
-### UI.js (access via `game.ui`)
-- `updateHealth(health, maxHealth)` - Update health bar with color coding
-- `updateScore(score)` - Update score display
-- `showStartScreen()` / `hideStartScreen()` - Start screen
-- `showGameOver(score)` / `hideGameOver()` - Game over screen
-- `showLevelComplete(score)` / `hideLevelComplete()` - Level complete screen
-- `showDamageFlash()` - Red screen flash on damage
-- `reset()` - Reset health bar and score to defaults
+3. Use in level: `this.game.sound.playMusic('dungeonBgm')`
 
-### Player.js
-- `update(delta, moveInput, platforms, arenaBounds)` - Movement, physics, animation
-- `jump()` - Jump if grounded
-- `attack(callback)` - Swing sword, callback for hit detection
-- `takeDamage(amount)` - Returns true if dead
-- `reset()` - Reset position, health, state
-- `getPosition()` - Returns mesh.position
-- `getAttackRange()` - Returns attack range (2.5)
+---
 
-### Enemy.js
-- `update(delta, playerPosition, arenaBounds)` - AI movement, returns distance to player
-- `canAttack()` - Returns true if can attack
-- `attack()` - Attack animation, returns damage amount
-- `takeDamage(amount, knockbackDir)` - Returns true if dead
-- `die(callback)` - Play death animation, then call callback
-- `getPosition()` - Returns mesh.position
+## Collision System
 
-### Level (interface)
-Required methods for any level:
-- `constructor(game)` - Store game reference
-- `init()` - Setup level
-- `onStart()` - Called when game starts
-- `update(delta)` - Called every frame
-- `restart()` - Reset level
-- `destroy()` - Cleanup
+### Platforms (for standing on)
+```javascript
+this.platforms.push({
+    mesh: groundMesh,
+    bounds: { minX: -25, maxX: 25, minZ: -15, maxZ: 15, y: 0 }
+});
+```
+
+### Obstacles (circular, blocks movement)
+```javascript
+// In createTree(), createTorch(), etc:
+this.obstacles.push({ x, z, radius: 0.6 });
+```
+
+Player.js automatically handles obstacle collision - pushes player out if too close.
+
+### Arena Bounds (invisible walls)
+```javascript
+this.arenaBounds = { minX: -24, maxX: 24, minZ: -14, maxZ: 14 };
+```
+
+### Adding Collision to Decorations
+
+When creating a decoration that should block movement:
+```javascript
+createTree(x, z) {
+    // ... create mesh ...
+    this.scene.add(tree);
+    
+    // Add collision
+    this.obstacles.push({ x, z, radius: 0.6 });
+}
+```
+
+Decorations without collision (grass, small rocks) just don't push to obstacles.
+
+---
 
 ## UI Elements (in index.html)
 
 | ID | Purpose |
 |----|---------|
 | `game-canvas` | Three.js canvas |
-| `health-fill` | Health bar fill element |
-| `health-text` | Health number display |
-| `score-value` | Score number display |
-| `start-screen` | Start screen overlay |
+| `health-fill` | Health bar fill |
+| `health-text` | Health number |
+| `score-value` | Score number |
+| `start-screen` | Start overlay |
 | `game-over-screen` | Game over overlay |
 | `level-complete-screen` | Level complete overlay |
-| `final-score` | Score on game over |
-| `level-score` | Score on level complete |
-| `start-btn` | Start button |
-| `restart-btn` | Restart button |
-| `next-btn` | Next level button |
+| `start-btn` / `restart-btn` / `next-btn` | Buttons |
 | `fullscreen-btn` | Fullscreen toggle |
 | `joystick-base/stick` | Mobile joystick |
-| `btn-jump` | Mobile jump button |
-| `btn-attack` | Mobile attack button |
+| `btn-jump` / `btn-attack` | Mobile buttons |
+
+---
 
 ## Controls
 
@@ -212,3 +321,12 @@ Required methods for any level:
 | Mobile Joystick | Move |
 | JUMP button | Jump |
 | ATK button | Attack |
+
+---
+
+## Quick Tips
+
+- **Testing sounds:** `game.sound.play('swing')` in browser console
+- **Adjusting difficulty:** Change `totalEnemies`, enemy `speed`, `attackDamage`
+- **Debug collision:** Add `console.log(this.obstacles)` in level init
+- **Performance:** Reduce shadow quality in Game.js for mobile

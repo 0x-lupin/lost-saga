@@ -1,225 +1,125 @@
 # Lost Saga - TODO List
 
-## Priority: High (Scalability Issues)
+## Priority: High
 
-### 1. Create Base Level Class
+### 1. Base Level Class
 **File:** `core/BaseLevel.js`
-**Why:** Level2, Level3 would duplicate camera follow, damage handling, UI updates
-**What to extract from Level1:**
-- `update()` - camera follow logic
-- `takeDamage()` - damage handling + screen flash
-- `updateHealthBar()` - health bar UI
-- `updateScore()` - score UI
-- `levelComplete()` - level complete trigger
-- `bindControls()` - basic control binding
+**Why:** Avoid duplicating camera follow, damage handling, UI updates in every level
 
-```javascript
-// Example structure
-export class BaseLevel {
-    constructor(game) { ... }
-    updateCamera(playerPos) { ... }
-    takeDamage(amount) { ... }
-    updateHealthBar() { ... }
-    updateScore() { ... }
-    // Abstract methods for subclasses
-    init() { throw 'implement in subclass'; }
-    createEnvironment() { throw 'implement in subclass'; }
-}
-```
+Extract from Level1:
+- Camera follow logic
+- `takeDamage()` + screen flash
+- `updateScore()`
+- `levelComplete()`
+- Basic control binding
 
-### 2. ~~Create UI Manager~~ ✅ DONE
-**File:** `core/UI.js`
-**Methods:**
-- `updateHealth(health, maxHealth)` - Updates health bar + color
-- `updateScore(score)` - Updates score display
-- `showStartScreen()` / `hideStartScreen()`
-- `showGameOver(score)` / `hideGameOver()`
-- `showLevelComplete(score)` / `hideLevelComplete()`
-- `showDamageFlash()` - Red screen flash
-- `reset()` - Reset health and score to defaults
-
-**Usage:** Access via `this.game.ui` in levels
-
-### 3. Create Camera Controller
+### 2. Camera Controller
 **File:** `core/Camera.js`
-**Why:** Camera logic in Level1, should be in Game or separate controller
-**What to include:**
-- `follow(target, offset)`
+- `follow(target, offset)` - Smooth follow
+- `shake(intensity, duration)` - Damage feedback
 - `setMode('follow' | 'fixed' | 'cinematic')`
-- `shake(intensity, duration)` - for damage feedback
 
-### 4. ~~Create Constants/Config File~~ (NOT NEEDED)
-**Reason:** Each level has different arena bounds, spawn positions, enemy counts, etc.
-Level-specific config should stay in each Level class.
-
-**What stays per-level:**
-- Arena bounds
-- Spawn positions
-- Enemy count/types
-- Platform layout
-- Environment theme
-
-**What could be shared (optional):**
-- Player base stats (but could also vary per level for difficulty)
-- Enemy type base stats (defined in each Enemy class already)
-
-**Current approach is fine:** Each level defines its own config in constructor.
+### 3. Level Progression
+**In Game.js:**
+- Track current level number
+- `nextLevel()` loads next level class
+- Save/load progress (localStorage)
 
 ---
 
-## Priority: Medium (New Features)
+## Priority: Medium
 
-### 5. Create Environment/Arena Class
-**File:** `environments/TrainingArena.js`
-**Why:** Environment creation hardcoded in Level1
-**What to include:**
-- `create(scene)` - create ground, platforms, decorations
-- `getPlatforms()` - return platform collision data
-- `getBounds()` - return arena bounds
+### 4. More Enemy Types
+**Files:** `entities/Skeleton.js`, `entities/Ghost.js`
+- Unique appearance
+- Different stats (health, speed, damage)
+- Unique attack patterns
 
-### 6. ~~Add Sound Manager~~ ✅ DONE
-**File:** `core/SoundManager.js`
-**Features:**
-- Procedural sound generation (no audio files needed!)
-- Background music (8-bit style looping melody)
-- SFX: swing (whoosh), hit (thud), enemy death, player hurt, jump
-- Level complete fanfare / game over melody
-- Volume controls (music/sfx separate)
-- Mute toggle
-- `playVaried()` for random pitch variation
+### 5. Level 2 & 3
+**Files:** `levels/Level2.js`, `levels/Level3.js`
+- Different environments (Dungeon, Graveyard)
+- Different enemy mix
+- Increasing difficulty
 
-**Usage:** Access via `this.game.sound` in levels
-
-### 7. Add Particle Effects
+### 6. Particle Effects
 **File:** `core/Particles.js`
-**Features:**
 - Blood splatter on hit
 - Dust on landing
 - Slash trail on attack
 
-### 8. Add More Enemy Types
-**Files:** `entities/Skeleton.js`, `entities/Ghost.js`, etc.
-**Each needs:**
-- Unique appearance (create method)
-- Different stats (health, speed, damage)
-- Unique attack patterns
-- Death animation
+### 7. Reusable Decorations (Optional)
+**Folder:** `environments/decorations/`
 
-### 9. Create Level2, Level3
-**Files:** `levels/Level2.js`, `levels/Level3.js`
-**Each level needs:**
-- Different environment
-- Different enemy mix
-- Increasing difficulty
-- Unique mechanics?
+If sharing decorations across levels:
+```javascript
+// environments/decorations/Tree.js
+export function createTree(scene, x, z) {
+    // ... create mesh ...
+    scene.add(tree);
+    return { x, z, radius: 0.6 }; // collision data
+}
 
-### 10. Add Level Progression System
-**In Game.js:**
-- Track current level number
-- `nextLevel()` should load next level class
-- Save/load progress (localStorage)
+// In any level:
+this.obstacles.push(createTree(this.scene, -18, -10));
+```
 
 ---
 
 ## Priority: Low (Polish)
 
-### 11. Add Player Death Animation
-**In Player.js:**
+### 8. Player Death Animation
 - Fall animation when health reaches 0
 - Delay before game over screen
 
-### 12. Add Spawn Animation for Enemies
-**In Enemy.js:**
+### 9. Enemy Spawn Animation
 - Rise from ground effect
 - Brief invulnerability
 
-### 13. Add Hit Feedback
-- Screen shake on player damage
-- Slow motion on kill (optional)
+### 10. Hit Feedback
+- Screen shake on damage
 - Damage numbers floating up
+- Slow motion on kill (optional)
 
-### 14. Add Pause Menu
+### 11. Pause Menu
 - ESC key to pause
 - Pause overlay with resume/quit
 
-### 15. Add Settings
+### 12. Settings Menu
 - Volume controls
-- Control rebinding
 - Graphics quality
+- Control rebinding
 
-### 16. Mobile Optimization (IMPORTANT - Mobile is a primary platform!)
-**Current mobile support:**
-- Virtual joystick (left side) - in controls.js setupJoystick()
-- JUMP + ATK buttons (right side) - in controls.js setupMobileButtons()
-- Fullscreen button
-- CSS hides mobile controls on desktop (@media query in style.css)
-- viewport meta tag with user-scalable=no
-
-**TODO for mobile:**
-- [ ] Test on actual devices (iOS Safari, Android Chrome)
+### 13. Mobile Optimization
+- [ ] Test on iOS Safari, Android Chrome
 - [ ] Larger touch targets if needed
-- [ ] Performance tuning (reduce shadow quality, polygon count)
-- [ ] Touch-based camera rotation? (optional)
-- [ ] Prevent accidental zoom/scroll
+- [ ] Reduce shadow quality for performance
 - [ ] Handle orientation changes
-- [ ] Add haptic feedback on attack/damage (navigator.vibrate)
+- [ ] Haptic feedback (navigator.vibrate)
 
 ---
 
-## Bug Fixes / Known Issues
+## Known Bugs
 
-### Current Bugs
-- [ ] Sword orientation may still look off from certain angles
-- [ ] Enemy can attack through platforms
-- [ ] No collision between enemies (they stack)
-
-### Performance
-- [ ] Consider object pooling for enemies (reuse instead of create/destroy)
-- [ ] LOD for distant objects if adding more detail
+- [ ] Sword orientation looks off from certain angles
+- [ ] Enemies can attack through obstacles
+- [ ] Enemies stack on each other (no enemy-enemy collision)
 
 ---
 
-## File Changes Summary
+## Performance Ideas
 
-### Files to CREATE:
-```
-core/BaseLevel.js
-core/Camera.js
-core/SoundManager.js
-core/Particles.js
-environments/TrainingArena.js
-entities/Skeleton.js
-levels/Level2.js
-levels/Level3.js
-```
-
-### Files CREATED:
-```
-core/UI.js ✅
-core/SoundManager.js ✅
-```
-
-### Files to MODIFY:
-```
-core/Game.js - Add UI, Camera, level progression
-levels/Level1.js - Extend BaseLevel, use constants
-entities/Player.js - Use constants, add death animation
-entities/Enemy.js - Use constants, add spawn animation
-main.js - Level progression logic
-index.html - Pause menu, settings
-style.css - New UI elements
-```
+- Object pooling for enemies (reuse instead of create/destroy)
+- LOD for distant objects
+- Reduce shadow map size on mobile
+- Batch grass into single geometry
 
 ---
 
-## Quick Reference: Current Level1 Config
+## Current Level1 Config
 
 ```javascript
-// Level1.js current settings
-totalEnemies: 10        // Total enemies to spawn
-spawnedCount: 0         // Tracks spawned count
-killCount: 0            // Tracks kills
-arenaBounds: { minX: -18, maxX: 18, minZ: -8, maxZ: 8 }
+totalEnemies: 10
+arenaBounds: { minX: -24, maxX: 24, minZ: -14, maxZ: 14 }
 
 // Initial spawn positions (5 enemies)
 positions: [
@@ -230,5 +130,5 @@ positions: [
     { x: 5, z: 3 }
 ]
 
-// Respawn: 1.5s delay after kill, random position
+// Respawn: 1.5s delay after kill, random position within bounds
 ```
