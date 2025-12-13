@@ -47,11 +47,11 @@ A comprehensive guide for developers (human or AI) to understand and extend this
 ### Acceptable Patterns (NOT Band-Aids)
 The following are intentional design choices, not workarounds:
 
-- **setTimeout for animations**: Used for attack swings, damage flashes, respawn delays. This is standard practice for simple timed events - the browser handles timing reliably, and it keeps code simple and readable.
+- **setTimeout for animations**: Used for attack swings, damage flashes, respawn delays. This is standard practice for simple timed events.
 - **Hardcoded values in classes**: Stats like `health`, `speed`, `attackDamage` are defined at the top of each class. This is appropriate for a game this size.
 - **requestAnimationFrame in death animations**: Enemy death uses its own animation loop - this is fine for one-off effects.
 
-**What IS a band-aid**: Adding offsets/hacks to compensate for a bug elsewhere (e.g., adding `-1` to all model positions because collision math was wrong). If you find yourself writing "offset to fix X", fix X instead.
+**What IS a band-aid**: Adding offsets/hacks to compensate for a bug elsewhere. If you find yourself writing "offset to fix X", fix X instead.
 
 ---
 
@@ -75,7 +75,8 @@ lost-saga/
 ├── index.html                 # Main HTML with UI elements
 ├── assets/
 │   ├── css/
-│   │   └── style.css          # All styles (UI, screens, mobile controls)
+│   │   ├── style.css          # Game styles (UI, screens, mobile controls)
+│   │   └── menu.css           # Main menu styles
 │   └── js/
 │       ├── main.js            # Entry point - loads Game and Level1
 │       ├── controls.js        # Keyboard + mobile joystick/buttons
@@ -83,10 +84,19 @@ lost-saga/
 │       │   ├── Game.js        # Game engine (renderer, scene, camera, game loop)
 │       │   └── UI.js          # UI manager (health, score, screens)
 │       ├── entities/
-│       │   ├── Player.js      # Player character with sword, animations
+│       │   ├── Player.js      # Realistic armored warrior with sword
 │       │   └── Enemy.js       # Zombie enemy with AI, animations
 │       ├── levels/
 │       │   └── Level1.js      # Training Grounds (environment + game logic)
+│       ├── props/
+│       │   ├── index.js       # Props registry (exports all props)
+│       │   ├── Tree.js        # Tree decoration with collision
+│       │   ├── Rock.js        # Rock decoration with collision
+│       │   ├── Torch.js       # Torch with flame effect
+│       │   ├── Dummy.js       # Training dummy
+│       │   └── Grass.js       # Grass patches (no collision)
+│       ├── scenes/
+│       │   └── MainMenu.js    # Main menu scene
 │       └── sounds/
 │           ├── SoundManager.js    # Audio system (registry pattern)
 │           ├── index.js           # Sound registry - ADD NEW SOUNDS HERE
@@ -101,9 +111,9 @@ lost-saga/
 ```
 1. main.js creates Game instance
 2. Game sets up Three.js (renderer, scene, camera, lights)
-3. Game.loadLevel(Level1) → Level1.init()
-4. Game.start() → animation loop begins
-5. User clicks "START GAME" → Game.startGame() → isRunning = true
+3. Main menu displayed with options
+4. User clicks "START GAME" → Game.loadLevel(Level1) → Level1.init()
+5. Game.start() → animation loop begins → isRunning = true
 6. Every frame: Level1.update(delta) is called
 7. Kill all enemies → Level1.levelComplete() → Game.levelComplete(score)
 ```
@@ -141,6 +151,28 @@ destroy()             // Cleanup when switching levels
 ```
 
 ### Player.js
+Realistic armored warrior character with detailed 3D model.
+
+**Model Structure:**
+- Hierarchical body parts (mesh → legGroup, torsoGroup, headGroup, arms)
+- Boots attached to leg groups (move with leg animation)
+- Sword attached to right arm
+- Smooth rotation interpolation when turning
+
+**Color Palette:**
+```javascript
+colors: {
+    skin: 0xd4a574,        // Skin tone
+    hair: 0x2c1810,        // Dark brown hair
+    armor: 0x4a5568,       // Steel gray armor
+    armorLight: 0x718096,  // Lighter armor highlights
+    armorDark: 0x2d3748,   // Darker armor shadows
+    leather: 0x5c4033,     // Brown leather
+    gold: 0xd4af37,        // Gold accents
+    cloth: 0x1a365d        // Dark blue cloth
+}
+```
+
 | Method | Description |
 |--------|-------------|
 | `update(delta, moveInput, platforms, arenaBounds, obstacles)` | Movement, physics, collision |
@@ -151,7 +183,14 @@ destroy()             // Cleanup when switching levels
 | `getPosition()` | Returns mesh.position |
 | `getAttackRange()` | Returns attack range (3.5) |
 
+**Animation System:**
+- Running: Leg swing, arm counter-swing, body bob
+- Idle: Breathing animation (subtle torso/head movement)
+- Attack: Wind-up → swing → return to idle
+
 ### Enemy.js
+Zombie enemy with shambling movement and attack AI.
+
 | Method | Description |
 |--------|-------------|
 | `update(delta, playerPos, arenaBounds)` | AI movement, returns distance |
@@ -203,10 +242,9 @@ export class Level2 {
         this.player = null;
         this.enemies = [];
         this.platforms = [];
-        this.obstacles = [];  // For collision
+        this.obstacles = [];
         this.score = 0;
         
-        // Level config
         this.totalEnemies = 15;
         this.arenaBounds = { minX: -20, maxX: 20, minZ: -12, maxZ: 12 };
     }
@@ -216,10 +254,6 @@ export class Level2 {
         this.createPlayer();
         this.spawnEnemies();
         this.bindControls();
-    }
-    
-    createEnvironment() {
-        // Your unique environment here
     }
     
     // ... implement other required methods
@@ -235,13 +269,37 @@ export class Level2 {
 3. Adjust stats: `health`, `speed`, `attackDamage`
 4. Import in level: `import { Skeleton } from '../entities/Skeleton.js'`
 
+### Add a New Prop
+
+1. Create `props/MyProp.js`:
+```javascript
+export function createMyProp(scene, x, z) {
+    const group = new THREE.Group();
+    // ... build your prop ...
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    // Return collision data (or null if no collision)
+    return { x, z, radius: 0.5 };
+}
+```
+
+2. Export from `props/index.js`:
+```javascript
+export { createMyProp } from './MyProp.js';
+```
+
+3. Use in level:
+```javascript
+this.obstacles.push(createMyProp(this.scene, 5, 10));
+```
+
 ### Add a New Sound Effect
 
 1. Create `sounds/sfx/mySound.js`:
 ```javascript
 export default function mySound(ctx, output, pitch = 1) {
     const now = ctx.currentTime;
-    
     const osc = ctx.createOscillator();
     osc.type = 'sine';
     osc.frequency.value = 440 * pitch;
@@ -260,37 +318,10 @@ export default function mySound(ctx, output, pitch = 1) {
 2. Register in `sounds/index.js`:
 ```javascript
 import mySound from './sfx/mySound.js';
-// In registerAllSounds():
 sound.registerSfx('mySound', mySound);
 ```
 
-3. Use anywhere: `this.game.sound.play('mySound')`
-
-### Add New Background Music
-
-1. Create `sounds/music/dungeonBgm.js`:
-```javascript
-function play(ctx, output) {
-    // Your music loop logic
-    // Return state object for stop()
-    return { timeout: null, stopped: false };
-}
-
-function stop(state) {
-    state.stopped = true;
-    if (state.timeout) clearTimeout(state.timeout);
-}
-
-export default { play, stop };
-```
-
-2. Register in `sounds/index.js`:
-```javascript
-import dungeonBgm from './music/dungeonBgm.js';
-sound.registerMusic('dungeonBgm', dungeonBgm);
-```
-
-3. Use in level: `this.game.sound.playMusic('dungeonBgm')`
+3. Use: `this.game.sound.play('mySound')`
 
 ---
 
@@ -306,7 +337,6 @@ this.platforms.push({
 
 ### Obstacles (circular, blocks movement)
 ```javascript
-// In createTree(), createTorch(), etc:
 this.obstacles.push({ x, z, radius: 0.6 });
 ```
 
@@ -316,21 +346,6 @@ Player.js automatically handles obstacle collision - pushes player out if too cl
 ```javascript
 this.arenaBounds = { minX: -24, maxX: 24, minZ: -14, maxZ: 14 };
 ```
-
-### Adding Collision to Decorations
-
-When creating a decoration that should block movement:
-```javascript
-createTree(x, z) {
-    // ... create mesh ...
-    this.scene.add(tree);
-    
-    // Add collision
-    this.obstacles.push({ x, z, radius: 0.6 });
-}
-```
-
-Decorations without collision (grass, small rocks) just don't push to obstacles.
 
 ---
 
@@ -342,10 +357,9 @@ Decorations without collision (grass, small rocks) just don't push to obstacles.
 | `health-fill` | Health bar fill |
 | `health-text` | Health number |
 | `score-value` | Score number |
-| `start-screen` | Start overlay |
+| `main-menu-screen` | Main menu overlay |
 | `game-over-screen` | Game over overlay |
 | `level-complete-screen` | Level complete overlay |
-| `start-btn` / `restart-btn` / `next-btn` | Buttons |
 | `fullscreen-btn` | Fullscreen toggle |
 | `joystick-base/stick` | Mobile joystick |
 | `btn-jump` / `btn-attack` | Mobile buttons |
