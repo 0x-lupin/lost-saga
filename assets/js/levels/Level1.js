@@ -2,6 +2,7 @@
 
 import { Player } from '../entities/Player.js';
 import { Enemy } from '../entities/Enemy.js';
+import { createTree, createRock, createTorch, createDummy, createGrass } from '../props/index.js';
 
 export class Level1 {
     constructor(game) {
@@ -75,192 +76,34 @@ export class Level1 {
         this.scene.add(rightWall);
         
         // === TREES (scattered around arena) ===
-        this.createTree(-18, -10);
-        this.createTree(-20, 5);
-        this.createTree(18, -8);
-        this.createTree(20, 6);
-        this.createTree(-10, -12);
-        this.createTree(10, -11);
-        this.createTree(0, 12);
+        this.obstacles.push(createTree(this.scene, -18, -10));
+        this.obstacles.push(createTree(this.scene, -20, 5));
+        this.obstacles.push(createTree(this.scene, 18, -8));
+        this.obstacles.push(createTree(this.scene, 20, 6));
+        this.obstacles.push(createTree(this.scene, -10, -12));
+        this.obstacles.push(createTree(this.scene, 10, -11));
+        this.obstacles.push(createTree(this.scene, 0, 12));
         
         // === ROCKS ===
-        this.createRock(-15, 3, 1.0);
-        this.createRock(16, -4, 0.8);
-        this.createRock(-8, -10, 0.7);
-        this.createRock(12, 8, 0.9);
-        this.createRock(-5, 10, 0.6);
+        this.obstacles.push(createRock(this.scene, -15, 3, 1.0));
+        this.obstacles.push(createRock(this.scene, 16, -4, 0.8));
+        this.obstacles.push(createRock(this.scene, -8, -10, 0.7));
+        this.obstacles.push(createRock(this.scene, 12, 8, 0.9));
+        this.obstacles.push(createRock(this.scene, -5, 10, 0.6));
         
         // === TORCHES ===
-        this.createTorch(-12, -9);
-        this.createTorch(12, -9);
-        this.createTorch(-18, 3);
-        this.createTorch(18, 3);
+        this.obstacles.push(createTorch(this.scene, -12, -9));
+        this.obstacles.push(createTorch(this.scene, 12, -9));
+        this.obstacles.push(createTorch(this.scene, -18, 3));
+        this.obstacles.push(createTorch(this.scene, 18, 3));
         
         // === WOODEN TRAINING DUMMIES ===
-        this.createDummy(-8, 5);
-        this.createDummy(8, -5);
+        this.obstacles.push(createDummy(this.scene, -8, 5));
+        this.obstacles.push(createDummy(this.scene, 8, -5));
         
         // === GRASS PATCHES ===
         for (let i = 0; i < 50; i++) {
-            this.createGrass(
-                (Math.random() - 0.5) * 44,
-                (Math.random() - 0.5) * 24
-            );
-        }
-    }
-    
-    createTree(x, z) {
-        const tree = new THREE.Group();
-        
-        // Trunk
-        const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 3, 8);
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.9 });
-        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-        trunk.position.y = 1.5;
-        trunk.castShadow = true;
-        tree.add(trunk);
-        
-        // Foliage layers
-        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2d5a2d, roughness: 0.8 });
-        
-        const foliage1 = new THREE.Mesh(new THREE.ConeGeometry(2, 3, 8), foliageMat);
-        foliage1.position.y = 4;
-        foliage1.castShadow = true;
-        tree.add(foliage1);
-        
-        const foliage2 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 8), foliageMat);
-        foliage2.position.y = 5.5;
-        foliage2.castShadow = true;
-        tree.add(foliage2);
-        
-        const foliage3 = new THREE.Mesh(new THREE.ConeGeometry(1, 2, 8), foliageMat);
-        foliage3.position.y = 6.8;
-        foliage3.castShadow = true;
-        tree.add(foliage3);
-        
-        tree.position.set(x, 0, z);
-        this.scene.add(tree);
-        
-        // Add collision (trunk radius)
-        this.obstacles.push({ x, z, radius: 0.6 });
-    }
-    
-    createRock(x, z, scale) {
-        const rockGeo = new THREE.DodecahedronGeometry(scale, 0);
-        const rockMat = new THREE.MeshStandardMaterial({ 
-            color: 0x6b6b6b, 
-            roughness: 0.9,
-            flatShading: true
-        });
-        const rock = new THREE.Mesh(rockGeo, rockMat);
-        rock.position.set(x, scale * 0.5, z);
-        rock.rotation.set(Math.random(), Math.random(), Math.random());
-        rock.castShadow = true;
-        rock.receiveShadow = true;
-        this.scene.add(rock);
-    }
-    
-    createTorch(x, z) {
-        const torch = new THREE.Group();
-        
-        // Base (so it doesn't float)
-        const baseGeo = new THREE.CylinderGeometry(0.2, 0.25, 0.15, 8);
-        const baseMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
-        const base = new THREE.Mesh(baseGeo, baseMat);
-        base.position.y = 0.075;
-        base.castShadow = true;
-        base.receiveShadow = true;
-        torch.add(base);
-        
-        // Pole
-        const poleGeo = new THREE.CylinderGeometry(0.08, 0.12, 2.5, 6);
-        const poleMat = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
-        const pole = new THREE.Mesh(poleGeo, poleMat);
-        pole.position.y = 1.4;
-        pole.castShadow = true;
-        torch.add(pole);
-        
-        // Flame holder
-        const holderGeo = new THREE.CylinderGeometry(0.15, 0.1, 0.3, 6);
-        const holderMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
-        const holder = new THREE.Mesh(holderGeo, holderMat);
-        holder.position.y = 2.8;
-        holder.castShadow = true;
-        torch.add(holder);
-        
-        // Flame (glowing)
-        const flameGeo = new THREE.ConeGeometry(0.12, 0.4, 6);
-        const flameMat = new THREE.MeshStandardMaterial({ 
-            color: 0xff6600,
-            emissive: 0xff4400,
-            emissiveIntensity: 1
-        });
-        const flame = new THREE.Mesh(flameGeo, flameMat);
-        flame.position.y = 3.1;
-        torch.add(flame);
-        
-        // Point light
-        const light = new THREE.PointLight(0xff6600, 0.5, 8);
-        light.position.y = 3;
-        torch.add(light);
-        
-        torch.position.set(x, 0, z);
-        this.scene.add(torch);
-        
-        // Add collision
-        this.obstacles.push({ x, z, radius: 0.3 });
-    }
-    
-    createDummy(x, z) {
-        const dummy = new THREE.Group();
-        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.9 });
-        
-        // Post
-        const postGeo = new THREE.CylinderGeometry(0.15, 0.2, 2.5, 8);
-        const post = new THREE.Mesh(postGeo, woodMat);
-        post.position.y = 1.25;
-        post.castShadow = true;
-        dummy.add(post);
-        
-        // Crossbar (arms)
-        const armGeo = new THREE.BoxGeometry(1.5, 0.15, 0.15);
-        const arms = new THREE.Mesh(armGeo, woodMat);
-        arms.position.y = 2;
-        arms.castShadow = true;
-        dummy.add(arms);
-        
-        // Head (straw)
-        const headGeo = new THREE.SphereGeometry(0.3, 8, 6);
-        const strawMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 1 });
-        const head = new THREE.Mesh(headGeo, strawMat);
-        head.position.y = 2.6;
-        head.castShadow = true;
-        dummy.add(head);
-        
-        dummy.position.set(x, 0, z);
-        this.scene.add(dummy);
-        
-        // Add collision
-        this.obstacles.push({ x, z, radius: 0.4 });
-    }
-    
-    createGrass(x, z) {
-        const grassMat = new THREE.MeshStandardMaterial({ 
-            color: 0x4a7c4a, 
-            side: THREE.DoubleSide 
-        });
-        
-        for (let i = 0; i < 3; i++) {
-            const bladeGeo = new THREE.PlaneGeometry(0.1, 0.4);
-            const blade = new THREE.Mesh(bladeGeo, grassMat);
-            blade.position.set(
-                x + (Math.random() - 0.5) * 0.3,
-                0.2,
-                z + (Math.random() - 0.5) * 0.3
-            );
-            blade.rotation.y = Math.random() * Math.PI;
-            blade.rotation.x = -0.2;
-            this.scene.add(blade);
+            createGrass(this.scene, (Math.random() - 0.5) * 44, (Math.random() - 0.5) * 24);
         }
     }
     
@@ -300,8 +143,10 @@ export class Level1 {
         };
         this.controls.onAttack = () => {
             if (!this.game.isRunning) return;
-            this.game.sound.playVaried('swing', 0.1);
-            this.player.attack(() => this.handleAttack());
+            const didAttack = this.player.attack(() => this.handleAttack());
+            if (didAttack) {
+                this.game.sound.playVaried('swing', 0.1);
+            }
         };
     }
     
