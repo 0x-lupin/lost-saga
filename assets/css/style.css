@@ -159,8 +159,7 @@ body {
     background: rgba(100, 200, 255, 0.8);
 }
 
-/* Start/Game Over/Level Complete Screens */
-#start-screen,
+/* Game Over/Level Complete Screens */
 #game-over-screen,
 #level-complete-screen {
     position: absolute;
@@ -177,7 +176,6 @@ body {
     color: #fff;
 }
 
-#start-screen h1,
 #game-over-screen h1,
 #level-complete-screen h1 {
     font-size: 3rem;
@@ -186,17 +184,17 @@ body {
     color: #fb923c;
 }
 
-#start-screen h2 {
-    font-size: 1.5rem;
-    margin-bottom: 30px;
-    color: #94a3b8;
+.game-over-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
 }
 
-#start-btn,
 #restart-btn,
-#next-btn {
-    padding: 15px 50px;
-    font-size: 1.3rem;
+#next-btn,
+#menu-btn {
+    padding: 15px 40px;
+    font-size: 1.2rem;
     font-weight: bold;
     background: linear-gradient(to bottom, #f97316, #ea580c);
     color: #fff;
@@ -204,18 +202,26 @@ body {
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
-    margin-bottom: 20px;
 }
 
 #next-btn {
     background: linear-gradient(to bottom, #22c55e, #16a34a);
 }
 
-#start-btn:hover,
+#menu-btn {
+    background: linear-gradient(to bottom, #374151, #1f2937);
+    border: 2px solid #4b5563;
+}
+
 #restart-btn:hover,
-#next-btn:hover {
+#next-btn:hover,
+#menu-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 0 20px rgba(249, 115, 22, 0.6);
+}
+
+#menu-btn:hover {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
 .instructions {
@@ -240,21 +246,17 @@ body {
         width: 150px;
         height: 20px;
     }
-    
+
     #score {
         font-size: 1rem;
         padding: 6px 10px;
     }
-    
-    #start-screen h1,
-    #game-over-screen h1 {
+
+    #game-over-screen h1,
+    #level-complete-screen h1 {
         font-size: 2rem;
     }
-    
-    #start-screen h2 {
-        font-size: 1.1rem;
-    }
-    
+
     .instructions {
         font-size: 0.8rem;
         text-align: center;

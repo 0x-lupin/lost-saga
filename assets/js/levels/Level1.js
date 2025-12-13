@@ -102,8 +102,31 @@ export class Level1 {
         this.obstacles.push(createDummy(this.scene, 8, -5));
         
         // === GRASS PATCHES ===
-        for (let i = 0; i < 50; i++) {
-            createGrass(this.scene, (Math.random() - 0.5) * 44, (Math.random() - 0.5) * 24);
+        // Helper to check if position is on the road (x between -4 and 4)
+        const isOnRoad = (x) => x > -4.5 && x < 4.5;
+        
+        // Dense grass around the arena (avoiding road)
+        for (let i = 0; i < 120; i++) {
+            let x = (Math.random() - 0.5) * 44;
+            if (isOnRoad(x)) x = x < 0 ? x - 5 : x + 5; // Push away from road
+            createGrass(this.scene, x, (Math.random() - 0.5) * 24);
+        }
+        // Extra grass along the walls
+        for (let i = 0; i < 30; i++) {
+            createGrass(this.scene, -22 + Math.random() * 4, (Math.random() - 0.5) * 26);
+            createGrass(this.scene, 20 + Math.random() * 4, (Math.random() - 0.5) * 26);
+        }
+        // Grass clusters near trees
+        for (let i = 0; i < 40; i++) {
+            createGrass(this.scene, -18 + (Math.random() - 0.5) * 6, -10 + (Math.random() - 0.5) * 6);
+            createGrass(this.scene, 18 + (Math.random() - 0.5) * 6, -8 + (Math.random() - 0.5) * 6);
+            createGrass(this.scene, -20 + (Math.random() - 0.5) * 6, 5 + (Math.random() - 0.5) * 6);
+            createGrass(this.scene, 20 + (Math.random() - 0.5) * 6, 6 + (Math.random() - 0.5) * 6);
+        }
+        // Grass along the path edges (just outside the road)
+        for (let i = 0; i < 30; i++) {
+            createGrass(this.scene, -5 - Math.random() * 2, (Math.random() - 0.5) * 26);
+            createGrass(this.scene, 5 + Math.random() * 2, (Math.random() - 0.5) * 26);
         }
     }
     
@@ -268,9 +291,22 @@ export class Level1 {
     }
     
     destroy() {
-        // Cleanup when switching levels
+        // Cleanup control bindings
+        this.controls.onJump = null;
+        this.controls.onAttack = null;
+        
+        // Cleanup enemies
         this.enemies.forEach(e => e.destroy());
-        if (this.player) this.scene.remove(this.player.mesh);
-        this.platforms.forEach(p => this.scene.remove(p.mesh));
+        this.enemies = [];
+        
+        // Cleanup player
+        if (this.player) {
+            this.scene.remove(this.player.mesh);
+            this.player = null;
+        }
+        
+        // Cleanup platforms (scene objects removed by clearScene)
+        this.platforms = [];
+        this.obstacles = [];
     }
 }

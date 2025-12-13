@@ -7,13 +7,14 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Lost Saga - Level 1</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/menu.css">
 </head>
 <body>
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
         
         <!-- UI Overlay -->
-        <div id="ui-overlay">
+        <div id="ui-overlay" class="hidden">
             <div id="health-bar">
                 <div id="health-fill"></div>
                 <span id="health-text">100</span>
@@ -35,19 +36,65 @@
             </div>
         </div>
         
-        <!-- Start Screen -->
-        <div id="start-screen">
-            <h1>LOST SAGA</h1>
-            <h2>Level 1: Training Grounds</h2>
-            <button id="start-btn">START GAME</button>
-            <p class="instructions">Move: WASD/Joystick | Jump: Space/Button | Attack: Click/Button</p>
+        <!-- Main Menu Screen -->
+        <div id="main-menu-screen">
+            <div class="menu-content">
+                <h1 class="game-title">LOST SAGA</h1>
+                <p class="game-subtitle">The Warrior's Journey</p>
+                
+                <div id="main-menu-buttons" class="menu-buttons">
+                    <button id="menu-start-btn" class="menu-btn primary">
+                        <span class="btn-icon">⚔</span> START GAME
+                    </button>
+                    <button id="menu-options-btn" class="menu-btn">
+                        <span class="btn-icon">⚙</span> OPTIONS
+                    </button>
+                    <button id="menu-credits-btn" class="menu-btn">
+                        <span class="btn-icon">★</span> CREDITS
+                    </button>
+                </div>
+                
+                <!-- Options Panel -->
+                <div id="options-panel" class="menu-panel hidden">
+                    <h2>OPTIONS</h2>
+                    <div class="option-row">
+                        <label for="music-volume">Music Volume</label>
+                        <input type="range" id="music-volume" min="0" max="100" value="30">
+                    </div>
+                    <div class="option-row">
+                        <label for="sfx-volume">SFX Volume</label>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="50">
+                    </div>
+                    <button id="options-back-btn" class="menu-btn">BACK</button>
+                </div>
+                
+                <!-- Credits Panel -->
+                <div id="credits-panel" class="menu-panel hidden">
+                    <h2>CREDITS</h2>
+                    <p class="credits-text">
+                        <strong>Lost Saga</strong><br>
+                        A 3D Action Game<br><br>
+                        Built with Three.js<br>
+                        Web Audio API<br><br>
+                        Thank you for playing!
+                    </p>
+                    <button id="credits-back-btn" class="menu-btn">BACK</button>
+                </div>
+                
+                <p class="menu-instructions">
+                    Move: WASD | Jump: Space | Attack: Click
+                </p>
+            </div>
         </div>
         
         <!-- Game Over Screen -->
         <div id="game-over-screen" class="hidden">
             <h1>GAME OVER</h1>
             <p>Score: <span id="final-score">0</span></p>
-            <button id="restart-btn">RESTART</button>
+            <div class="game-over-buttons">
+                <button id="restart-btn">RESTART</button>
+                <button id="menu-btn">MAIN MENU</button>
+            </div>
         </div>
         
         <!-- Level Complete Screen -->
