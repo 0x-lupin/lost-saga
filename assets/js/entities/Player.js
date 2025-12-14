@@ -1181,12 +1181,15 @@ export class Player {
         
         // Apply knockback if direction provided
         if (knockbackDir) {
-            const knockbackStrength = 12;
-            this.knockbackVelocity.x = knockbackDir.x * knockbackStrength;
-            this.knockbackVelocity.z = knockbackDir.z * knockbackStrength;
+            this.applyKnockback(knockbackDir, 12);
         }
         
         return this.health <= 0;
+    }
+    
+    applyKnockback(direction, force = 12) {
+        this.knockbackVelocity.x = direction.x * force;
+        this.knockbackVelocity.z = direction.z * force;
     }
     
     heal(amount) {
