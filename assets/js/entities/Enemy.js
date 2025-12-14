@@ -530,17 +530,17 @@ export class Enemy {
         }
     }
     
+    cancelWindUp() {
+        // Wrapper for interruptAttack
+        this.interruptAttack();
+        this.resetArmPosition();
+    }
+    
     resetArmPosition() {
         if (this.leftArm) this.leftArm.rotation.x = -0.8;
         if (this.rightArm) this.rightArm.rotation.x = -0.8;
         if (this.leftArm) this.leftArm.rotation.z = 0;
         if (this.rightArm) this.rightArm.rotation.z = 0;
-    }
-    
-    cancelWindUp() {
-        // Wrapper for interruptAttack
-        this.interruptAttack();
-        this.resetArmPosition();
     }
     
     interruptAttack() {
