@@ -18,6 +18,7 @@ export class Enemy {
         };
         const settings = { ...defaults, ...config };
         
+        // Apply settings
         this.size = settings.size;
         this.health = settings.health;
         this.maxHealth = settings.health;
@@ -31,23 +32,29 @@ export class Enemy {
         this.lungeRange = this.attackRange * settings.lungeMultiplier;
         this.mass = this.size * this.size;
         this.playerRadius = 0.5; // Updated in update(), default to standard player
-        
+
+        // Attack state
         this.attackCooldown = 0;
         this.isAttacking = false;
+        this.distanceToPlayer = Infinity; // Updated each frame in update()
+        
+        // Wind-up attack state
         this.isWindingUp = false;
         this.attackInterrupted = false;
         this.windUpProgress = 0;
         this.windUpDuration = settings.windUpDuration;
         this.onAttackHit = null;
-        this.animTime = Math.random() * Math.PI * 2;
-        this.distanceToPlayer = Infinity; // Updated each frame in update()
         
         // Spawn animation state
         this.isSpawning = true;
         this.spawnProgress = 0;
         this.spawnDuration = 1.2; // seconds to rise from ground
         
+        // Animation state
+        this.animTime = Math.random() * Math.PI * 2;
+        
         this.create(x, z);
+        this.startSpawnAnimation();
     }
     
     create(x, z) {
@@ -216,7 +223,7 @@ export class Enemy {
         torsoGroup.add(headGroup); // Attach to torso so it moves with torso
         this.headGroup = headGroup;
         
-        this.mesh.position.set(x, -1.8, z); // Start below ground for spawn animation
+        this.mesh.position.set(x, 0, z);
         
         // Apply size scaling
         if (this.size !== 1.0) {
@@ -252,34 +259,53 @@ export class Enemy {
         return handGroup;
     }
     
+    startSpawnAnimation() {
+        this.isSpawning = true;
+        this.spawnProgress = 0;
+        
+        // Initial pose - zombie underground
+        if (this.leftArm) this.leftArm.rotation.x = -1.5;
+        if (this.rightArm) this.rightArm.rotation.x = -1.5;
+        this.mesh.position.y = -1.8;
+        this.mesh.rotation.x = 0.3;
+    }
+    
+    updateSpawnAnimation(delta) {
+        if (!this.isSpawning) return false;
+        
+        this.spawnProgress += delta;
+        const progress = Math.min(this.spawnProgress / this.spawnDuration, 1);
+        
+        // Ease out - slow down as zombie emerges
+        const easeOut = 1 - Math.pow(1 - progress, 2);
+        
+        // Rise from y=-1.8 to y=0
+        this.mesh.position.y = -1.8 + (1.8 * easeOut);
+        
+        // Arms burst out first, reaching upward
+        if (this.leftArm) this.leftArm.rotation.x = -1.5 + (0.7 * progress);
+        if (this.rightArm) this.rightArm.rotation.x = -1.5 + (0.7 * progress);
+        
+        // Slight body rotation as emerging
+        this.mesh.rotation.x = (1 - progress) * 0.3;
+        
+        if (progress >= 1) {
+            this.isSpawning = false;
+            this.mesh.position.y = 0;
+            this.mesh.rotation.x = 0;
+            return true; // Spawn complete
+        }
+        
+        return false; // Still spawning
+    }
+    
     update(delta, playerPosition, arenaBounds, obstacles = [], enemies = [], playerRadius = 0.5, playerMass = 1.0) {
         // Store player radius for canAttack() check
         this.playerRadius = playerRadius;
         
         // Handle spawn animation
         if (this.isSpawning) {
-            this.spawnProgress += delta;
-            const progress = Math.min(this.spawnProgress / this.spawnDuration, 1);
-            
-            // Ease out - slow down as zombie emerges
-            const easeOut = 1 - Math.pow(1 - progress, 2);
-            
-            // Rise from y=-1.8 to y=0
-            this.mesh.position.y = -1.8 + (1.8 * easeOut);
-            
-            // Arms burst out first, reaching upward
-            if (this.leftArm) this.leftArm.rotation.x = -1.5 + (0.7 * progress);
-            if (this.rightArm) this.rightArm.rotation.x = -1.5 + (0.7 * progress);
-            
-            // Slight body rotation as emerging
-            this.mesh.rotation.x = (1 - progress) * 0.3;
-            
-            if (progress >= 1) {
-                this.isSpawning = false;
-                this.mesh.position.y = 0;
-                this.mesh.rotation.x = 0;
-            }
-            
+            this.updateSpawnAnimation(delta);
             return playerPosition.distanceTo(this.mesh.position);
         }
         
@@ -460,6 +486,11 @@ export class Enemy {
         this.onAttackHit = onHitCallback;
     }
     
+    startWindUp() {
+        // Not used in Lost Saga - attack() handles it
+        return false;
+    }
+    
     updateWindUp(delta) {
         if (!this.isWindingUp) return;
         
@@ -504,6 +535,12 @@ export class Enemy {
         if (this.rightArm) this.rightArm.rotation.x = -0.8;
         if (this.leftArm) this.leftArm.rotation.z = 0;
         if (this.rightArm) this.rightArm.rotation.z = 0;
+    }
+    
+    cancelWindUp() {
+        // Wrapper for interruptAttack
+        this.interruptAttack();
+        this.resetArmPosition();
     }
     
     interruptAttack() {
