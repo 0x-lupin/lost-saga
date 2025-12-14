@@ -32,20 +32,21 @@ export class Enemy {
         
         // Zombie colors
         const skinColor = 0x6b8e6b; // Greenish dead skin
-        const clothColor = 0x3d3d3d; // Torn dark clothes
+        const clothColor = 0x3d3d3d; // Torn dark clothes (shirt)
+        const pantsColor = 0x4a3728; // Dirty brown torn pants
         const darkSkin = 0x4a6b4a;
         
         // === LEGS ===
         const legGroup = new THREE.Group();
         
         // Left leg (torn pants)
-        const leftLeg = this.createLimb(0.18, 0.5, 0.18, clothColor);
+        const leftLeg = this.createLimb(0.18, 0.5, 0.18, pantsColor);
         leftLeg.position.set(-0.15, -0.25, 0);
         legGroup.add(leftLeg);
         this.leftLeg = leftLeg;
         
         // Right leg
-        const rightLeg = this.createLimb(0.18, 0.5, 0.18, clothColor);
+        const rightLeg = this.createLimb(0.18, 0.5, 0.18, pantsColor);
         rightLeg.position.set(0.15, -0.25, 0);
         legGroup.add(rightLeg);
         this.rightLeg = rightLeg;
@@ -90,8 +91,9 @@ export class Enemy {
             torsoGroup.add(rib);
         }
         
-        torsoGroup.position.y = 1.2; // Torso position
+        torsoGroup.position.y = 0.95; // Torso position (bottom touches leg top at y=0.6)
         this.mesh.add(torsoGroup);
+        this.torsoGroup = torsoGroup;
         
         // === ARMS ===
         // Left arm (reaching forward)
@@ -107,9 +109,9 @@ export class Enemy {
         leftHand.position.set(0, -0.65, 0);
         leftArmGroup.add(leftHand);
         
-        leftArmGroup.position.set(-0.4, 1.35, 0); // Arm position
+        leftArmGroup.position.set(-0.4, 0.15, 0); // Arm position (relative to torso)
         leftArmGroup.rotation.x = -0.8; // Arms reaching forward
-        this.mesh.add(leftArmGroup);
+        torsoGroup.add(leftArmGroup); // Attach to torso so it moves with torso
         this.leftArm = leftArmGroup;
         
         // Right arm
@@ -125,9 +127,9 @@ export class Enemy {
         rightHand.position.set(0, -0.65, 0);
         rightArmGroup.add(rightHand);
         
-        rightArmGroup.position.set(0.4, 1.35, 0); // Arm position
+        rightArmGroup.position.set(0.4, 0.15, 0); // Arm position (relative to torso)
         rightArmGroup.rotation.x = -0.8;
-        this.mesh.add(rightArmGroup);
+        torsoGroup.add(rightArmGroup); // Attach to torso so it moves with torso
         this.rightArm = rightArmGroup;
 
         
@@ -186,9 +188,9 @@ export class Enemy {
         hair.position.set(-0.05, 0.28, -0.05);
         headGroup.add(hair);
         
-        headGroup.position.y = 1.75; // Head position
+        headGroup.position.y = 0.55; // Head position (relative to torso)
         headGroup.rotation.z = 0.15; // Tilted head
-        this.mesh.add(headGroup);
+        torsoGroup.add(headGroup); // Attach to torso so it moves with torso
         this.headGroup = headGroup;
         
         this.mesh.position.set(x, -1.8, z); // Start below ground for spawn animation
@@ -291,6 +293,18 @@ export class Enemy {
         if (!this.isWindingUp && !this.isAttacking) {
             if (this.leftLeg) this.leftLeg.rotation.x = sway * 0.3;
             if (this.rightLeg) this.rightLeg.rotation.x = -sway * 0.3;
+            
+            // Zombie torso shamble - exaggerated swaying and lurching
+            if (this.torsoGroup) {
+                // Side-to-side sway (opposite to legs for zombie lurch)
+                this.torsoGroup.rotation.z = sway * 0.15;
+                // Forward hunch with bob
+                this.torsoGroup.rotation.x = 0.2 + Math.abs(sway) * 0.1;
+                // Slight twist as zombie shambles
+                this.torsoGroup.rotation.y = sway * 0.08;
+                // Vertical bob (lurching up and down)
+                this.torsoGroup.position.y = 0.95 + Math.abs(sway) * 0.05;
+            }
         }
         
         // Wind-up animation
@@ -312,6 +326,14 @@ export class Enemy {
             // Body leans back then forward
             this.mesh.rotation.x = -progress * 0.2;
             
+            // Torso tenses up during wind-up
+            if (this.torsoGroup) {
+                this.torsoGroup.rotation.z = 0;
+                this.torsoGroup.rotation.x = 0.1 + progress * 0.2;
+                this.torsoGroup.rotation.y = 0;
+                this.torsoGroup.position.y = 0.95;
+            }
+            
             // Head tilts up (looking at player menacingly)
             if (this.headGroup) {
                 this.headGroup.rotation.x = -progress * 0.3;
@@ -324,6 +346,14 @@ export class Enemy {
             
             // Reset body rotation
             this.mesh.rotation.x *= 0.9;
+            
+            // Torso slowly returns to hunched idle
+            if (this.torsoGroup) {
+                this.torsoGroup.rotation.z *= 0.9;
+                this.torsoGroup.rotation.x = 0.2 + Math.sin(this.animTime * 0.3) * 0.05; // Subtle breathing
+                this.torsoGroup.rotation.y *= 0.9;
+                this.torsoGroup.position.y = 0.95;
+            }
             
             // Head bob
             if (this.headGroup) {

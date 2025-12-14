@@ -195,7 +195,7 @@ Zombie enemy with shambling movement and attack AI.
 |--------|-------------|
 | `update(delta, playerPos, arenaBounds)` | AI movement, returns distance |
 | `canAttack()` | Returns true if can attack |
-| `attack(onHitCallback)` | Wind-up (400ms) then callback with damage if not interrupted |
+| `attack(onHitCallback)` | Wind-up (500ms) then callback with damage if not interrupted |
 | `interruptAttack()` | Cancel wind-up (called automatically on takeDamage) |
 | `takeDamage(amount, knockbackDir)` | Returns true if dead, interrupts wind-up |
 | `die(callback)` | Death animation, then callback |
