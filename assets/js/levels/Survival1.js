@@ -230,8 +230,7 @@ export class Survival1 {
                 size: 1.3 + level * 0.039,
                 health: 50 + level * 0.3,
                 attackDamage: 15 + level * 0.01,
-                speed: 1.2 + level * 0.03,
-                attackRange: 1.0 + level * 0.013
+                speed: 1.2 + level * 0.03
             };
         }
         
@@ -241,8 +240,7 @@ export class Survival1 {
                 size: 0.8,
                 health: 20,
                 attackDamage: 8,
-                speed: 2.5 + Math.random() * 0.5 + level * 0.07,
-                attackRange: 1.1
+                speed: 2.5 + Math.random() * 0.1 + level * 0.07
             };
         }
         
@@ -352,7 +350,7 @@ export class Survival1 {
                     const currentEnemyPos = enemy.getPosition();
                     const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
                     
-                    if (currentDistance < enemy.lungeRange) {
+                    if (currentDistance < enemy.lungeRange + enemy.playerRadius) {
                         const knockbackDir = new THREE.Vector3()
                             .subVectors(currentPlayerPos, currentEnemyPos)
                             .normalize();

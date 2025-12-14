@@ -13,7 +13,6 @@ export class Enemy {
             health: 30,
             attackDamage: 10,
             speed: 1.5 + Math.random() * 0.5,
-            attackRange: 1.0,
             lungeMultiplier: 1.5
         };
         const settings = { ...defaults, ...config };
@@ -23,10 +22,14 @@ export class Enemy {
         this.maxHealth = settings.health;
         this.speed = settings.speed;
         this.attackDamage = settings.attackDamage;
-        this.attackRange = settings.attackRange * this.size; // Scales with size
-        this.lungeRange = this.attackRange * settings.lungeMultiplier; // Extended reach on attack
-        this.collisionRadius = 0.5 * this.size; // Scales with size
-        this.mass = this.size * this.size; // Bigger = heavier (squared)
+        
+        // Physical properties (all derived from size)
+        this.collisionRadius = 0.5 * this.size;  // Body radius
+        this.armReach = 0.5 * this.size;         // Arms reach as far as body radius
+        this.attackRange = this.collisionRadius + this.armReach; // = size (center to fingertips)
+        this.lungeRange = this.attackRange * settings.lungeMultiplier;
+        this.mass = this.size * this.size;
+        this.playerRadius = 0.5; // Updated in update(), default to standard player
         
         this.attackCooldown = 0;
         this.isAttacking = false;
@@ -249,6 +252,9 @@ export class Enemy {
     }
     
     update(delta, playerPosition, arenaBounds, obstacles = [], enemies = [], playerRadius = 0.5, playerMass = 1.0) {
+        // Store player radius for canAttack() check
+        this.playerRadius = playerRadius;
+        
         // Handle spawn animation
         if (this.isSpawning) {
             this.spawnProgress += delta;
@@ -442,7 +448,7 @@ export class Enemy {
                !this.isAttacking && 
                !this.isSpawning && 
                !this.isWindingUp &&
-               this.distanceToPlayer <= this.attackRange;
+               this.distanceToPlayer <= this.attackRange + this.playerRadius;
     }
     
     attack(onHitCallback) {

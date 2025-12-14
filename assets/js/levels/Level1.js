@@ -268,7 +268,7 @@ export class Level1 {
                     const currentEnemyPos = enemy.getPosition();
                     const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
                     
-                    if (currentDistance < enemy.lungeRange) {
+                    if (currentDistance < enemy.lungeRange + enemy.playerRadius) {
                         const knockbackDir = new THREE.Vector3()
                             .subVectors(currentPlayerPos, currentEnemyPos)
                             .normalize();
