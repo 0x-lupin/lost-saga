@@ -13,7 +13,8 @@ export class Enemy {
             health: 30,
             attackDamage: 10,
             speed: 1.5 + Math.random() * 0.5,
-            attackRange: 1.5
+            attackRange: 1.0,
+            lungeMultiplier: 1.5
         };
         const settings = { ...defaults, ...config };
         
@@ -22,7 +23,8 @@ export class Enemy {
         this.maxHealth = settings.health;
         this.speed = settings.speed;
         this.attackDamage = settings.attackDamage;
-        this.attackRange = settings.attackRange;
+        this.attackRange = settings.attackRange * this.size; // Scales with size
+        this.lungeRange = this.attackRange * settings.lungeMultiplier; // Extended reach on attack
         this.collisionRadius = 0.5 * this.size; // Scales with size
         this.mass = this.size * this.size; // Bigger = heavier (squared)
         
@@ -34,6 +36,7 @@ export class Enemy {
         this.windUpDuration = 0.5; // seconds
         this.onAttackHit = null;
         this.animTime = Math.random() * Math.PI * 2;
+        this.distanceToPlayer = Infinity; // Updated each frame in update()
         
         // Spawn animation state
         this.isSpawning = true;
@@ -350,6 +353,9 @@ export class Enemy {
         // Shambling animation
         this.animate(delta);
         
+        // Store distance for canAttack() check
+        this.distanceToPlayer = distance;
+        
         return distance;
     }
     
@@ -432,7 +438,11 @@ export class Enemy {
     }
     
     canAttack() {
-        return this.attackCooldown <= 0 && !this.isAttacking && !this.isSpawning && !this.isWindingUp;
+        return this.attackCooldown <= 0 && 
+               !this.isAttacking && 
+               !this.isSpawning && 
+               !this.isWindingUp &&
+               this.distanceToPlayer <= this.attackRange;
     }
     
     attack(onHitCallback) {

@@ -65,22 +65,28 @@ export class Game {
         const ambientLight = new THREE.AmbientLight(0x404080, 0.5);
         this.scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(10, 20, 10);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-        directionalLight.shadow.camera.near = 0.5;
-        directionalLight.shadow.camera.far = 50;
-        directionalLight.shadow.camera.left = -20;
-        directionalLight.shadow.camera.right = 20;
-        directionalLight.shadow.camera.top = 20;
-        directionalLight.shadow.camera.bottom = -20;
-        this.scene.add(directionalLight);
+        this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        this.directionalLight.position.set(10, 20, 10);
+        this.directionalLight.castShadow = true;
+        this.directionalLight.shadow.mapSize.width = 2048;
+        this.directionalLight.shadow.mapSize.height = 2048;
+        this.directionalLight.shadow.camera.near = 0.5;
+        this.directionalLight.shadow.camera.far = 50;
+        // Default shadow bounds (can be configured per level)
+        this.setShadowBounds(-20, 20, 20, -20);
+        this.scene.add(this.directionalLight);
         
         const pointLight = new THREE.PointLight(0xff6600, 0.8, 30);
         pointLight.position.set(-5, 5, 5);
         this.scene.add(pointLight);
+    }
+    
+    setShadowBounds(left, right, top, bottom) {
+        this.directionalLight.shadow.camera.left = left;
+        this.directionalLight.shadow.camera.right = right;
+        this.directionalLight.shadow.camera.top = top;
+        this.directionalLight.shadow.camera.bottom = bottom;
+        this.directionalLight.shadow.camera.updateProjectionMatrix();
     }
     
     setupControls() {

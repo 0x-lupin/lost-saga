@@ -6,18 +6,20 @@ import { createTree, createRock, createTorch, createDummy, createGrass } from '.
 
 export class Level1 {
     constructor(game) {
+        // References
         this.game = game;
         this.scene = game.scene;
         this.camera = game.camera;
         this.controls = game.controls;
         
+        // Entities
         this.player = null;
         this.enemies = [];
         this.platforms = [];
-        this.obstacles = []; // Circular obstacles (trees, torches, etc.)
-        this.score = 0;
+        this.obstacles = [];
         
         // Level config
+        this.score = 0;
         this.totalEnemies = 15;
         this.spawnedCount = 0;
         this.killCount = 0;
@@ -257,8 +259,8 @@ export class Level1 {
         // Update enemies
         this.enemies.forEach(enemy => {
             if (enemy.isDying) return;
-            const distance = enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
-            if (distance < 1.8 && enemy.canAttack()) {
+            enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
+            if (enemy.canAttack()) {
                 // Start attack with callback - damage is dealt after wind-up
                 enemy.attack((damage) => {
                     // Check if player is still in range when attack lands
@@ -266,7 +268,7 @@ export class Level1 {
                     const currentEnemyPos = enemy.getPosition();
                     const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
                     
-                    if (currentDistance < 2.2) { // Slightly larger range for the lunge
+                    if (currentDistance < enemy.lungeRange) {
                         const knockbackDir = new THREE.Vector3()
                             .subVectors(currentPlayerPos, currentEnemyPos)
                             .normalize();

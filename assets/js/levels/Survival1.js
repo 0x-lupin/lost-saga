@@ -30,6 +30,9 @@ export class Survival1 {
     }
     
     init() {
+        // Larger arena needs bigger shadow bounds
+        this.game.setShadowBounds(-50, 50, 30, -30);
+        
         this.createEnvironment();
         this.createPlayer();
         this.spawnInitialEnemies();
@@ -218,17 +221,17 @@ export class Survival1 {
         // Roll 0.05-0.08 → Fast (3%)
         // Roll 0.08-1.00 → Normal (92%)
         const roll = Math.random();
-        const bigChance = Math.min(0.11, 0.05 + level * 0.0015);   // 5% → 11%
+        const bigChance = Math.min(0.91, 0.65 + level * 0.0015);   // 5% → 11%
         const fastChance = Math.min(0.08, 0.03 + level * 0.0025);  // 3% → 8%
         
         // Big zombie
-        if (level >= 3 && roll < bigChance) {
+        if (level >= 1 && roll < bigChance) {
             return {
-                size: 1.4 + Math.random() * 0.2 + level * 0.03,
+                size: 1.3 + level * 0.03,
                 health: 50 + level * 0.3,
                 attackDamage: 15 + level * 0.01,
                 speed: 1.2 + level * 0.03,
-                attackRange: 2.0 + level * 0.03
+                attackRange: 2.2 + level * 0.06
             };
         }
         
@@ -342,14 +345,14 @@ export class Survival1 {
         // Update enemies
         this.enemies.forEach(enemy => {
             if (enemy.isDying) return;
-            const distance = enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
-            if (distance < 1.8 && enemy.canAttack()) {
+            enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
+            if (enemy.canAttack()) {
                 enemy.attack((damage) => {
                     const currentPlayerPos = this.player.getPosition();
                     const currentEnemyPos = enemy.getPosition();
                     const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
                     
-                    if (currentDistance < 2.2) {
+                    if (currentDistance < enemy.lungeRange) {
                         const knockbackDir = new THREE.Vector3()
                             .subVectors(currentPlayerPos, currentEnemyPos)
                             .normalize();
