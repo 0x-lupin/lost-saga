@@ -12,6 +12,11 @@ export class Enemy {
         this.attackCooldown = 0;
         this.attackDamage = 10;
         this.isAttacking = false;
+        this.isWindingUp = false;
+        this.attackInterrupted = false;
+        this.windUpProgress = 0;
+        this.windUpDuration = 0.5; // seconds
+        this.onAttackHit = null;
         this.animTime = Math.random() * Math.PI * 2;
         
         // Spawn animation state
@@ -250,11 +255,14 @@ export class Enemy {
         
         const distance = playerPosition.distanceTo(this.mesh.position);
         
-        // Shambling movement
-        if (distance > 1.5 && !this.isAttacking) {
+        // Shambling movement (stop during wind-up and attack)
+        if (distance > 1.5 && !this.isAttacking && !this.isWindingUp) {
             this.mesh.position.x += direction.x * this.speed * delta;
             this.mesh.position.z += direction.z * this.speed * delta;
         }
+        
+        // Update wind-up animation
+        this.updateWindUp(delta);
         
         // Face player
         this.mesh.rotation.y = Math.atan2(direction.x, direction.z);
@@ -279,46 +287,123 @@ export class Enemy {
         this.animTime += delta * 4;
         const sway = Math.sin(this.animTime);
         
-        // Leg shamble
-        if (this.leftLeg) this.leftLeg.rotation.x = sway * 0.3;
-        if (this.rightLeg) this.rightLeg.rotation.x = -sway * 0.3;
-        
-        // Arm sway (zombie reaching)
-        if (!this.isAttacking) {
-            if (this.leftArm) this.leftArm.rotation.x = -0.8 + sway * 0.15;
-            if (this.rightArm) this.rightArm.rotation.x = -0.8 - sway * 0.15;
+        // Leg shamble (not during wind-up/attack)
+        if (!this.isWindingUp && !this.isAttacking) {
+            if (this.leftLeg) this.leftLeg.rotation.x = sway * 0.3;
+            if (this.rightLeg) this.rightLeg.rotation.x = -sway * 0.3;
         }
         
-        // Head bob
-        if (this.headGroup) {
-            this.headGroup.rotation.x = Math.sin(this.animTime * 0.5) * 0.1;
+        // Wind-up animation
+        if (this.isWindingUp) {
+            const progress = this.windUpProgress;
+            const shake = Math.sin(this.animTime * 15) * 0.1 * progress; // Trembling increases
+            
+            // Arms raise back progressively
+            const armRaise = -0.8 + (progress * 1.2); // From -0.8 to 0.4 (raised back)
+            if (this.leftArm) {
+                this.leftArm.rotation.x = armRaise;
+                this.leftArm.rotation.z = -progress * 0.4 + shake;
+            }
+            if (this.rightArm) {
+                this.rightArm.rotation.x = armRaise;
+                this.rightArm.rotation.z = progress * 0.4 + shake;
+            }
+            
+            // Body leans back then forward
+            this.mesh.rotation.x = -progress * 0.2;
+            
+            // Head tilts up (looking at player menacingly)
+            if (this.headGroup) {
+                this.headGroup.rotation.x = -progress * 0.3;
+                this.headGroup.rotation.z = shake;
+            }
+        } else if (!this.isAttacking) {
+            // Normal arm sway (zombie reaching)
+            if (this.leftArm) this.leftArm.rotation.x = -0.8 + sway * 0.15;
+            if (this.rightArm) this.rightArm.rotation.x = -0.8 - sway * 0.15;
+            
+            // Reset body rotation
+            this.mesh.rotation.x *= 0.9;
+            
+            // Head bob
+            if (this.headGroup) {
+                this.headGroup.rotation.x = Math.sin(this.animTime * 0.5) * 0.1;
+                this.headGroup.rotation.z *= 0.9;
+            }
         }
     }
     
     canAttack() {
-        return this.attackCooldown <= 0 && !this.isAttacking && !this.isSpawning;
+        return this.attackCooldown <= 0 && !this.isAttacking && !this.isSpawning && !this.isWindingUp;
     }
     
-    attack() {
+    attack(onHitCallback) {
         this.attackCooldown = 1.5;
-        this.isAttacking = true;
+        this.isWindingUp = true;
+        this.windUpProgress = 0;
+        this.attackInterrupted = false;
+        this.onAttackHit = onHitCallback;
+    }
+    
+    updateWindUp(delta) {
+        if (!this.isWindingUp) return;
         
-        // Attack animation - lunge forward with arms
-        if (this.leftArm) this.leftArm.rotation.x = -1.5;
-        if (this.rightArm) this.rightArm.rotation.x = -1.5;
+        this.windUpProgress += delta / this.windUpDuration;
         
-        setTimeout(() => {
-            if (this.leftArm) this.leftArm.rotation.x = -0.8;
-            if (this.rightArm) this.rightArm.rotation.x = -0.8;
-            this.isAttacking = false;
-        }, 300);
-        
-        return this.attackDamage;
+        if (this.windUpProgress >= 1) {
+            this.isWindingUp = false;
+            this.windUpProgress = 0;
+            
+            if (this.attackInterrupted || this.isDying) {
+                this.resetArmPosition();
+                this.mesh.rotation.x = 0;
+                return;
+            }
+            
+            // Execute the attack lunge
+            this.isAttacking = true;
+            
+            // Lunge forward with arms
+            if (this.leftArm) this.leftArm.rotation.x = -1.5;
+            if (this.rightArm) this.rightArm.rotation.x = -1.5;
+            if (this.leftArm) this.leftArm.rotation.z = 0;
+            if (this.rightArm) this.rightArm.rotation.z = 0;
+            
+            // Body lunges forward
+            this.mesh.rotation.x = 0.3;
+            
+            // Notify that attack is landing now
+            if (this.onAttackHit) this.onAttackHit(this.attackDamage);
+            
+            // Return to idle after lunge
+            setTimeout(() => {
+                this.resetArmPosition();
+                this.mesh.rotation.x = 0;
+                this.isAttacking = false;
+            }, 250);
+        }
+    }
+    
+    resetArmPosition() {
+        if (this.leftArm) this.leftArm.rotation.x = -0.8;
+        if (this.rightArm) this.rightArm.rotation.x = -0.8;
+        if (this.leftArm) this.leftArm.rotation.z = 0;
+        if (this.rightArm) this.rightArm.rotation.z = 0;
+    }
+    
+    interruptAttack() {
+        if (this.isWindingUp) {
+            this.attackInterrupted = true;
+            this.onAttackHit = null;
+        }
     }
     
     takeDamage(amount, knockbackDir) {
         // Invulnerable while spawning
         if (this.isSpawning) return false;
+        
+        // Interrupt wind-up if hit
+        this.interruptAttack();
         
         this.health -= amount;
         

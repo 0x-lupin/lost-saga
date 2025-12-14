@@ -259,12 +259,20 @@ export class Level1 {
             if (enemy.isDying) return;
             const distance = enemy.update(delta, playerPos, this.arenaBounds);
             if (distance < 1.8 && enemy.canAttack()) {
-                // Calculate knockback direction (from enemy to player)
-                const enemyPos = enemy.getPosition();
-                const knockbackDir = new THREE.Vector3()
-                    .subVectors(playerPos, enemyPos)
-                    .normalize();
-                this.takeDamage(enemy.attack(), knockbackDir);
+                // Start attack with callback - damage is dealt after wind-up
+                enemy.attack((damage) => {
+                    // Check if player is still in range when attack lands
+                    const currentPlayerPos = this.player.getPosition();
+                    const currentEnemyPos = enemy.getPosition();
+                    const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
+                    
+                    if (currentDistance < 2.2) { // Slightly larger range for the lunge
+                        const knockbackDir = new THREE.Vector3()
+                            .subVectors(currentPlayerPos, currentEnemyPos)
+                            .normalize();
+                        this.takeDamage(damage, knockbackDir);
+                    }
+                });
             }
         });
     }
