@@ -2,15 +2,29 @@
 // Zombie Enemy
 
 export class Enemy {
-    constructor(scene, x, z, id) {
+    constructor(scene, x, z, id, config = {}) {
         this.scene = scene;
         this.mesh = null;
         this.id = id;
-        this.health = 30;
-        this.maxHealth = 30;
-        this.speed = 1.5 + Math.random() * 0.5;
+        
+        // Configurable stats with defaults for backward compatibility
+        const defaults = {
+            size: 1.0,
+            health: 30,
+            attackDamage: 10,
+            speed: 1.5 + Math.random() * 0.5,
+            attackRange: 1.5
+        };
+        const settings = { ...defaults, ...config };
+        
+        this.size = settings.size;
+        this.health = settings.health;
+        this.maxHealth = settings.health;
+        this.speed = settings.speed;
+        this.attackDamage = settings.attackDamage;
+        this.attackRange = settings.attackRange;
+        
         this.attackCooldown = 0;
-        this.attackDamage = 10;
         this.isAttacking = false;
         this.isWindingUp = false;
         this.attackInterrupted = false;
@@ -194,6 +208,12 @@ export class Enemy {
         this.headGroup = headGroup;
         
         this.mesh.position.set(x, -1.8, z); // Start below ground for spawn animation
+        
+        // Apply size scaling
+        if (this.size !== 1.0) {
+            this.mesh.scale.set(this.size, this.size, this.size);
+        }
+        
         this.scene.add(this.mesh);
     }
     
@@ -258,7 +278,7 @@ export class Enemy {
         const distance = playerPosition.distanceTo(this.mesh.position);
         
         // Shambling movement (stop during wind-up and attack)
-        if (distance > 1.5 && !this.isAttacking && !this.isWindingUp) {
+        if (distance > this.attackRange && !this.isAttacking && !this.isWindingUp) {
             this.mesh.position.x += direction.x * this.speed * delta;
             this.mesh.position.z += direction.z * this.speed * delta;
         }
