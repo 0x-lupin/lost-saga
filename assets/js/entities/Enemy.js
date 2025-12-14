@@ -23,6 +23,7 @@ export class Enemy {
         this.speed = settings.speed;
         this.attackDamage = settings.attackDamage;
         this.attackRange = settings.attackRange;
+        this.collisionRadius = 0.5 * this.size; // Scales with size
         
         this.attackCooldown = 0;
         this.isAttacking = false;
@@ -243,7 +244,7 @@ export class Enemy {
         return handGroup;
     }
     
-    update(delta, playerPosition, arenaBounds) {
+    update(delta, playerPosition, arenaBounds, obstacles = [], enemies = [], playerRadius = 0.5) {
         // Handle spawn animation
         if (this.isSpawning) {
             this.spawnProgress += delta;
@@ -295,6 +296,48 @@ export class Enemy {
         // Arena bounds
         this.mesh.position.x = Math.max(arenaBounds.minX, Math.min(arenaBounds.maxX, this.mesh.position.x));
         this.mesh.position.z = Math.max(arenaBounds.minZ, Math.min(arenaBounds.maxZ, this.mesh.position.z));
+        
+        // Collision with obstacles (environment)
+        for (const obs of obstacles) {
+            const dx = this.mesh.position.x - obs.x;
+            const dz = this.mesh.position.z - obs.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            const minDist = this.collisionRadius + obs.radius;
+            if (dist < minDist && dist > 0) {
+                const pushX = (dx / dist) * (minDist - dist);
+                const pushZ = (dz / dist) * (minDist - dist);
+                this.mesh.position.x += pushX;
+                this.mesh.position.z += pushZ;
+            }
+        }
+        
+        // Collision with other enemies
+        for (const other of enemies) {
+            if (other === this || other.isDying || other.isSpawning) continue;
+            const dx = this.mesh.position.x - other.mesh.position.x;
+            const dz = this.mesh.position.z - other.mesh.position.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            const minDist = this.collisionRadius + other.collisionRadius;
+            if (dist < minDist && dist > 0) {
+                // Push both enemies apart equally
+                const pushX = (dx / dist) * (minDist - dist) * 0.5;
+                const pushZ = (dz / dist) * (minDist - dist) * 0.5;
+                this.mesh.position.x += pushX;
+                this.mesh.position.z += pushZ;
+            }
+        }
+        
+        // Collision with player
+        const dx = this.mesh.position.x - playerPosition.x;
+        const dz = this.mesh.position.z - playerPosition.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        const minDist = this.collisionRadius + playerRadius;
+        if (dist < minDist && dist > 0) {
+            const pushX = (dx / dist) * (minDist - dist);
+            const pushZ = (dz / dist) * (minDist - dist);
+            this.mesh.position.x += pushX;
+            this.mesh.position.z += pushZ;
+        }
         
         // Attack cooldown
         this.attackCooldown -= delta;

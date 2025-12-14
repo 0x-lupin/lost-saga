@@ -257,7 +257,7 @@ export class Level1 {
         // Update enemies
         this.enemies.forEach(enemy => {
             if (enemy.isDying) return;
-            const distance = enemy.update(delta, playerPos, this.arenaBounds);
+            const distance = enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, 0.5);
             if (distance < 1.8 && enemy.canAttack()) {
                 // Start attack with callback - damage is dealt after wind-up
                 enemy.attack((damage) => {

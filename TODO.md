@@ -144,10 +144,7 @@ assets/js/
 
 ## Performance Ideas
 
-- Object pooling for enemies (reuse instead of create/destroy)
-- LOD for distant objects
 - Reduce shadow map size on mobile
-- Batch grass into single geometry
 - Instanced meshes for repeated props
 
 ---
