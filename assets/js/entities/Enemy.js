@@ -24,6 +24,7 @@ export class Enemy {
         this.attackDamage = settings.attackDamage;
         this.attackRange = settings.attackRange;
         this.collisionRadius = 0.5 * this.size; // Scales with size
+        this.mass = this.size * this.size; // Bigger = heavier (squared)
         
         this.attackCooldown = 0;
         this.isAttacking = false;
@@ -244,7 +245,7 @@ export class Enemy {
         return handGroup;
     }
     
-    update(delta, playerPosition, arenaBounds, obstacles = [], enemies = [], playerRadius = 0.5) {
+    update(delta, playerPosition, arenaBounds, obstacles = [], enemies = [], playerRadius = 0.5, playerMass = 1.0) {
         // Handle spawn animation
         if (this.isSpawning) {
             this.spawnProgress += delta;
@@ -311,7 +312,7 @@ export class Enemy {
             }
         }
         
-        // Collision with other enemies
+        // Collision with other enemies (mass-based push)
         for (const other of enemies) {
             if (other === this || other.isDying || other.isSpawning) continue;
             const dx = this.mesh.position.x - other.mesh.position.x;
@@ -319,22 +320,26 @@ export class Enemy {
             const dist = Math.sqrt(dx * dx + dz * dz);
             const minDist = this.collisionRadius + other.collisionRadius;
             if (dist < minDist && dist > 0) {
-                // Push both enemies apart equally
-                const pushX = (dx / dist) * (minDist - dist) * 0.5;
-                const pushZ = (dz / dist) * (minDist - dist) * 0.5;
+                // Push based on mass ratio (heavier pushes lighter more)
+                const totalMass = this.mass + other.mass;
+                const pushRatio = other.mass / totalMass;
+                const pushX = (dx / dist) * (minDist - dist) * pushRatio;
+                const pushZ = (dz / dist) * (minDist - dist) * pushRatio;
                 this.mesh.position.x += pushX;
                 this.mesh.position.z += pushZ;
             }
         }
         
-        // Collision with player
+        // Collision with player (mass-based push)
         const dx = this.mesh.position.x - playerPosition.x;
         const dz = this.mesh.position.z - playerPosition.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
         const minDist = this.collisionRadius + playerRadius;
         if (dist < minDist && dist > 0) {
-            const pushX = (dx / dist) * (minDist - dist);
-            const pushZ = (dz / dist) * (minDist - dist);
+            const totalMass = this.mass + playerMass;
+            const pushRatio = playerMass / totalMass;
+            const pushX = (dx / dist) * (minDist - dist) * pushRatio;
+            const pushZ = (dz / dist) * (minDist - dist) * pushRatio;
             this.mesh.position.x += pushX;
             this.mesh.position.z += pushZ;
         }

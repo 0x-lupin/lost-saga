@@ -241,7 +241,7 @@ export class Level1 {
         
         // Update player
         const moveInput = this.controls.getMoveInput();
-        const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds, this.obstacles);
+        const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds, this.obstacles, this.enemies);
         
         if (fell) {
             this.takeDamage(100);
@@ -257,7 +257,7 @@ export class Level1 {
         // Update enemies
         this.enemies.forEach(enemy => {
             if (enemy.isDying) return;
-            const distance = enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, 0.5);
+            const distance = enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
             if (distance < 1.8 && enemy.canAttack()) {
                 // Start attack with callback - damage is dealt after wind-up
                 enemy.attack((damage) => {

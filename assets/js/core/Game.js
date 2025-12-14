@@ -6,6 +6,7 @@ import { SoundManager } from '../sounds/SoundManager.js';
 import { registerAllSounds } from '../sounds/index.js';
 import { MainMenu } from '../scenes/MainMenu.js';
 import { Level1 } from '../levels/Level1.js';
+import { Survival1 } from '../levels/Survival1.js';
 
 export class Game {
     constructor() {
@@ -93,6 +94,7 @@ export class Game {
         
         // Main menu events
         document.getElementById('menu-start-btn')?.addEventListener('click', () => this.onMenuStart());
+        document.getElementById('menu-survival-btn')?.addEventListener('click', () => this.onMenuSurvival());
         document.getElementById('menu-options-btn')?.addEventListener('click', () => this.showOptions());
         document.getElementById('menu-credits-btn')?.addEventListener('click', () => this.showCredits());
         document.getElementById('options-back-btn')?.addEventListener('click', () => this.hideOptions());
@@ -142,6 +144,29 @@ export class Game {
         document.getElementById('ui-overlay').classList.remove('hidden');
         
         this.loadLevel(Level1);
+        this.isRunning = true;
+        this.clock.start();
+        if (this.currentLevel) {
+            this.currentLevel.onStart();
+        }
+    }
+    
+    onMenuSurvival() {
+        this.sound.init();
+        this.sound.resume();
+        this.sound.play('hit');
+        this.startSurvival();
+    }
+    
+    startSurvival() {
+        this.gameState = 'playing';
+        this.clearScene();
+        this.setupLights();
+        
+        document.getElementById('main-menu-screen').classList.add('hidden');
+        document.getElementById('ui-overlay').classList.remove('hidden');
+        
+        this.loadLevel(Survival1);
         this.isRunning = true;
         this.clock.start();
         if (this.currentLevel) {

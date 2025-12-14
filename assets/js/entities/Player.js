@@ -13,6 +13,8 @@ export class Player {
         this.attackDamage = 15;
         this.moveSpeed = 8;
         this.jumpForce = 12;
+        this.collisionRadius = 0.5;
+        this.mass = 1.0;
         
         // Animation state
         this.animationTime = 0;
@@ -910,7 +912,7 @@ export class Player {
         this.shadowDisc = shadow;
     }
     
-    update(delta, moveInput, platforms, arenaBounds, obstacles = []) {
+    update(delta, moveInput, platforms, arenaBounds, obstacles = [], enemies = []) {
         this.isMoving = moveInput.x !== 0 || moveInput.z !== 0;
         
         // Apply movement
@@ -968,16 +970,32 @@ export class Player {
         }
         
         // Obstacle collision (circular)
-        const playerRadius = 0.5;
         for (const obs of obstacles) {
             const dx = this.mesh.position.x - obs.x;
             const dz = this.mesh.position.z - obs.z;
             const dist = Math.sqrt(dx * dx + dz * dz);
-            const minDist = playerRadius + obs.radius;
+            const minDist = this.collisionRadius + obs.radius;
             
             if (dist < minDist && dist > 0) {
                 const pushX = (dx / dist) * (minDist - dist);
                 const pushZ = (dz / dist) * (minDist - dist);
+                this.mesh.position.x += pushX;
+                this.mesh.position.z += pushZ;
+            }
+        }
+        
+        // Collision with enemies (mass-based push)
+        for (const enemy of enemies) {
+            if (enemy.isDying || enemy.isSpawning) continue;
+            const dx = this.mesh.position.x - enemy.mesh.position.x;
+            const dz = this.mesh.position.z - enemy.mesh.position.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            const minDist = this.collisionRadius + enemy.collisionRadius;
+            if (dist < minDist && dist > 0) {
+                const totalMass = this.mass + enemy.mass;
+                const pushRatio = enemy.mass / totalMass;
+                const pushX = (dx / dist) * (minDist - dist) * pushRatio;
+                const pushZ = (dz / dist) * (minDist - dist) * pushRatio;
                 this.mesh.position.x += pushX;
                 this.mesh.position.z += pushZ;
             }
