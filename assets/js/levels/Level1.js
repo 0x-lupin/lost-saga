@@ -259,13 +259,18 @@ export class Level1 {
             if (enemy.isDying) return;
             const distance = enemy.update(delta, playerPos, this.arenaBounds);
             if (distance < 1.8 && enemy.canAttack()) {
-                this.takeDamage(enemy.attack());
+                // Calculate knockback direction (from enemy to player)
+                const enemyPos = enemy.getPosition();
+                const knockbackDir = new THREE.Vector3()
+                    .subVectors(playerPos, enemyPos)
+                    .normalize();
+                this.takeDamage(enemy.attack(), knockbackDir);
             }
         });
     }
     
-    takeDamage(amount) {
-        const isDead = this.player.takeDamage(amount);
+    takeDamage(amount, knockbackDir = null) {
+        const isDead = this.player.takeDamage(amount, knockbackDir);
         this.game.ui.updateHealth(this.player.health, this.player.maxHealth);
         this.game.ui.showDamageFlash();
         this.game.sound.playVaried('playerHurt', 0.1);

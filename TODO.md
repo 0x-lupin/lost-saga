@@ -69,24 +69,20 @@ Extract from Level1:
 - Fall animation when health reaches 0
 - Delay before game over screen
 
-### 10. Enemy Spawn Animation
-- Rise from ground effect
-- Brief invulnerability
-
-### 11. Hit Feedback
+### 10. Hit Feedback
 - Screen shake on damage
 - Damage numbers floating up
 - Slow motion on kill (optional)
 
-### 12. Pause Menu
+### 11. Pause Menu
 - ESC key to pause
 - Pause overlay with resume/quit
 
-### 13. Settings Persistence
+### 12. Settings Persistence
 - Save volume settings to localStorage
 - Save graphics quality preference
 
-### 14. Mobile Optimization
+### 13. Mobile Optimization
 - [ ] Test on iOS Safari, Android Chrome
 - [ ] Larger touch targets if needed
 - [ ] Reduce shadow quality for performance
@@ -159,7 +155,7 @@ assets/js/
 ## Current Level1 Config
 
 ```javascript
-totalEnemies: 10
+totalEnemies: 15
 arenaBounds: { minX: -24, maxX: 24, minZ: -14, maxZ: 14 }
 
 // Initial spawn positions (5 enemies)
@@ -171,5 +167,6 @@ positions: [
     { x: 5, z: 3 }
 ]
 
-// Respawn: 1.5s delay after kill, random position within bounds
+// Timed spawning: new zombie every 2.5s until all 15 are on stage
+// Zombies rise from ground with spawn animation (1.2s, invulnerable during spawn)
 ```

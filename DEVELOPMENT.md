@@ -178,7 +178,7 @@ colors: {
 | `update(delta, moveInput, platforms, arenaBounds, obstacles)` | Movement, physics, collision |
 | `jump()` | Jump if grounded, returns success |
 | `attack(callback)` | Swing sword, callback for hit detection |
-| `takeDamage(amount)` | Returns true if dead |
+| `takeDamage(amount, knockbackDir)` | Apply damage + knockback, returns true if dead |
 | `reset()` | Reset position, health, state |
 | `getPosition()` | Returns mesh.position |
 | `getAttackRange()` | Returns attack range (3.5) |

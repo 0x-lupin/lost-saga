@@ -18,6 +18,10 @@ export class Player {
         this.animationTime = 0;
         this.isMoving = false;
         
+        // Knockback state
+        this.knockbackVelocity = { x: 0, z: 0 };
+        this.knockbackFriction = 8;
+        
         // Colors
         this.colors = {
             skin: 0xd4a574,
@@ -903,6 +907,21 @@ export class Player {
         this.mesh.position.x += moveInput.x * this.moveSpeed * delta;
         this.mesh.position.z += moveInput.z * this.moveSpeed * delta;
         
+        // Apply knockback
+        if (this.knockbackVelocity.x !== 0 || this.knockbackVelocity.z !== 0) {
+            this.mesh.position.x += this.knockbackVelocity.x * delta;
+            this.mesh.position.z += this.knockbackVelocity.z * delta;
+            
+            // Apply friction to knockback
+            const friction = this.knockbackFriction * delta;
+            this.knockbackVelocity.x *= Math.max(0, 1 - friction);
+            this.knockbackVelocity.z *= Math.max(0, 1 - friction);
+            
+            // Stop if very small
+            if (Math.abs(this.knockbackVelocity.x) < 0.1) this.knockbackVelocity.x = 0;
+            if (Math.abs(this.knockbackVelocity.z) < 0.1) this.knockbackVelocity.z = 0;
+        }
+        
         // Rotate to face movement direction
         if (this.isMoving) {
             const angle = Math.atan2(moveInput.x, moveInput.z);
@@ -1064,9 +1083,17 @@ export class Player {
         return true;
     }
     
-    takeDamage(amount) {
+    takeDamage(amount, knockbackDir = null) {
         this.health -= amount;
         this.health = Math.max(0, this.health);
+        
+        // Apply knockback if direction provided
+        if (knockbackDir) {
+            const knockbackStrength = 12;
+            this.knockbackVelocity.x = knockbackDir.x * knockbackStrength;
+            this.knockbackVelocity.z = knockbackDir.z * knockbackStrength;
+        }
+        
         return this.health <= 0;
     }
     
@@ -1077,6 +1104,7 @@ export class Player {
     reset() {
         this.mesh.position.set(0, 0, 5);
         this.velocity = { x: 0, y: 0, z: 0 };
+        this.knockbackVelocity = { x: 0, z: 0 };
         this.health = this.maxHealth;
         this.isGrounded = false;
         this.isAttacking = false;
