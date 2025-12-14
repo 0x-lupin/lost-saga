@@ -13,7 +13,8 @@ export class Enemy {
             health: 30,
             attackDamage: 10,
             speed: 1.5 + Math.random() * 0.5,
-            lungeMultiplier: 1.5
+            lungeMultiplier: 1.5,
+            windUpDuration: 0.5
         };
         const settings = { ...defaults, ...config };
         
@@ -36,7 +37,7 @@ export class Enemy {
         this.isWindingUp = false;
         this.attackInterrupted = false;
         this.windUpProgress = 0;
-        this.windUpDuration = 0.5; // seconds
+        this.windUpDuration = settings.windUpDuration;
         this.onAttackHit = null;
         this.animTime = Math.random() * Math.PI * 2;
         this.distanceToPlayer = Infinity; // Updated each frame in update()
