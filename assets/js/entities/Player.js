@@ -18,6 +18,16 @@ export class Player {
         this.animationTime = 0;
         this.isMoving = false;
         
+        // Attack animation state
+        this.attackProgress = 0;
+        this.attackPhase = 'none'; // 'windup', 'swing', 'followthrough', 'none'
+        this.attackCallback = null;
+        this.attackDuration = {
+            windup: 0.12,      // Wind-up time
+            swing: 0.08,       // Swing time (hit happens here)
+            followthrough: 0.15 // Follow-through time
+        };
+        
         // Knockback state
         this.knockbackVelocity = { x: 0, z: 0 };
         this.knockbackFriction = 8;
@@ -980,6 +990,9 @@ export class Player {
         // Animate
         this.animate(delta);
         
+        // Update attack animation
+        this.updateAttack(delta);
+        
         return this.mesh.position.y < -10;
     }
     
@@ -1057,30 +1070,91 @@ export class Player {
     attack(callback) {
         if (this.isAttacking) return false;
         this.isAttacking = true;
-        
-        const origArmX = this.rightArm.rotation.x;
-        const origArmZ = this.rightArm.rotation.z;
-        
-        // Wind up
-        this.rightArm.rotation.x = -1.0;
-        this.rightArm.rotation.z = 0.6;
-        
-        // Swing
-        setTimeout(() => {
-            this.rightArm.rotation.x = 0.8;
-            this.rightArm.rotation.z = -0.4;
-            
-            if (callback) callback();
-        }, 100);
-        
-        // Return to idle
-        setTimeout(() => {
-            this.rightArm.rotation.x = origArmX;
-            this.rightArm.rotation.z = origArmZ;
-            this.isAttacking = false;
-        }, 350);
-        
+        this.attackProgress = 0;
+        this.attackPhase = 'windup';
+        this.attackCallback = callback;
         return true;
+    }
+    
+    updateAttack(delta) {
+        if (!this.isAttacking || this.attackPhase === 'none') return;
+        
+        this.attackProgress += delta;
+        
+        // Animation values
+        const arm = this.rightArm;
+        const torso = this.torsoGroup;
+        
+        if (this.attackPhase === 'windup') {
+            const duration = this.attackDuration.windup;
+            const t = Math.min(this.attackProgress / duration, 1);
+            const ease = t * t; // Ease in (accelerate)
+            
+            // Arm winds back
+            arm.rotation.x = ease * -1.2;
+            arm.rotation.z = ease * 0.7;
+            
+            // Torso rotates back slightly
+            if (torso) {
+                torso.rotation.y = ease * -0.2;
+                torso.rotation.z = ease * 0.1;
+            }
+            
+            if (t >= 1) {
+                this.attackProgress = 0;
+                this.attackPhase = 'swing';
+            }
+        } else if (this.attackPhase === 'swing') {
+            const duration = this.attackDuration.swing;
+            const t = Math.min(this.attackProgress / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 3); // Ease out (fast start, slow end)
+            
+            // Arm swings forward powerfully
+            arm.rotation.x = -1.2 + ease * 2.2; // From -1.2 to 1.0
+            arm.rotation.z = 0.7 - ease * 1.2;  // From 0.7 to -0.5
+            
+            // Torso follows through
+            if (torso) {
+                torso.rotation.y = -0.2 + ease * 0.4; // Rotate into swing
+                torso.rotation.z = 0.1 - ease * 0.15;
+            }
+            
+            // Trigger hit callback at peak of swing
+            if (t >= 0.5 && this.attackCallback) {
+                this.attackCallback();
+                this.attackCallback = null;
+            }
+            
+            if (t >= 1) {
+                this.attackProgress = 0;
+                this.attackPhase = 'followthrough';
+            }
+        } else if (this.attackPhase === 'followthrough') {
+            const duration = this.attackDuration.followthrough;
+            const t = Math.min(this.attackProgress / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 2); // Ease out
+            
+            // Arm returns to neutral
+            arm.rotation.x = 1.0 * (1 - ease);
+            arm.rotation.z = -0.5 * (1 - ease);
+            
+            // Torso returns
+            if (torso) {
+                torso.rotation.y = 0.2 * (1 - ease);
+                torso.rotation.z = -0.05 * (1 - ease);
+            }
+            
+            if (t >= 1) {
+                this.attackPhase = 'none';
+                this.isAttacking = false;
+                arm.rotation.x = 0;
+                arm.rotation.z = 0;
+                if (torso) {
+                    torso.rotation.y = 0;
+                    torso.rotation.z = 0;
+                }
+            }
+        }
     }
     
     takeDamage(amount, knockbackDir = null) {
@@ -1108,6 +1182,9 @@ export class Player {
         this.health = this.maxHealth;
         this.isGrounded = false;
         this.isAttacking = false;
+        this.attackPhase = 'none';
+        this.attackProgress = 0;
+        this.attackCallback = null;
     }
     
     getPosition() {

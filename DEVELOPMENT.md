@@ -177,7 +177,7 @@ colors: {
 |--------|-------------|
 | `update(delta, moveInput, platforms, arenaBounds, obstacles)` | Movement, physics, collision |
 | `jump()` | Jump if grounded, returns success |
-| `attack(callback)` | Swing sword, callback for hit detection |
+| `attack(callback)` | Smooth 3-phase sword swing (windup→swing→followthrough), callback at hit |
 | `takeDamage(amount, knockbackDir)` | Apply damage + knockback, returns true if dead |
 | `reset()` | Reset position, health, state |
 | `getPosition()` | Returns mesh.position |
@@ -186,7 +186,10 @@ colors: {
 **Animation System:**
 - Running: Leg swing, arm counter-swing, body bob
 - Idle: Breathing animation (subtle torso/head movement)
-- Attack: Wind-up → swing → return to idle
+- Attack: Smooth 3-phase animation with easing:
+  - Wind-up (120ms): Arm pulls back, torso rotates
+  - Swing (80ms): Fast slash with torso follow-through, hit callback at 50%
+  - Follow-through (150ms): Smooth return to idle
 
 ### Enemy.js
 Zombie enemy with shambling movement and attack AI.
