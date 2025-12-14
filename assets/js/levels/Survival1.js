@@ -221,16 +221,16 @@ export class Survival1 {
         // Roll 0.05-0.08 → Fast (3%)
         // Roll 0.08-1.00 → Normal (92%)
         const roll = Math.random();
-        const bigChance = Math.min(0.11, 0.05 + level * 0.0015);   // 5% → 11%
-        const fastChance = Math.min(0.88, 0.83 + level * 0.0025);  // 3% → 8%
+        const bigChance = Math.min(0.05, 0.01 + level * 0.0015);   // 1% → 5%
+        const fastChance = Math.min(0.08, 0.03 + level * 0.0025);  // 3% → 8%
         
         // Big zombie
         if (level >= 1 && roll < bigChance) {
             return {
                 size: 1.3 + level * 0.039,
-                health: 50 + level * 0.3,
-                attackDamage: 15 + level * 0.01,
-                speed: 1.2 + level * 0.03
+                health: 50 + level * 0.5,
+                attackDamage: 10 + level * 0.01,
+                speed: 1.2 + level * 0.039
             };
         }
         
