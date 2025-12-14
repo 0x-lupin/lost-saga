@@ -221,17 +221,17 @@ export class Survival1 {
         // Roll 0.05-0.08 → Fast (3%)
         // Roll 0.08-1.00 → Normal (92%)
         const roll = Math.random();
-        const bigChance = Math.min(0.91, 0.65 + level * 0.0015);   // 5% → 11%
-        const fastChance = Math.min(0.08, 0.03 + level * 0.0025);  // 3% → 8%
+        const bigChance = Math.min(0.11, 0.05 + level * 0.0015);   // 5% → 11%
+        const fastChance = Math.min(0.88, 0.83 + level * 0.0025);  // 3% → 8%
         
         // Big zombie
         if (level >= 1 && roll < bigChance) {
             return {
-                size: 1.3 + level * 0.03,
+                size: 1.3 + level * 0.039,
                 health: 50 + level * 0.3,
                 attackDamage: 15 + level * 0.01,
                 speed: 1.2 + level * 0.03,
-                attackRange: 2.2 + level * 0.06
+                attackRange: 1.0 + level * 0.013
             };
         }
         
@@ -241,16 +241,16 @@ export class Survival1 {
                 size: 0.8,
                 health: 20,
                 attackDamage: 8,
-                speed: 2.5 + Math.random() * 0.5 + level * 0.08,
-                attackRange: 0.8
+                speed: 2.5 + Math.random() * 0.5 + level * 0.07,
+                attackRange: 1.1
             };
         }
         
         // Normal zombie with tiny scaling
         return {
-            health: 30 + level * 0.1,
-            attackDamage: 7 + level * 0.02,
-            speed: 1.3 + Math.random() * 0.3 + level * 0.02
+            health: 30 + level * 0.07,
+            attackDamage: 7 + level * 0.01,
+            speed: 1.3 + Math.random() * 0.1 + level * 0.01
         };
     }
     
