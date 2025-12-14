@@ -18,10 +18,14 @@ export class Level1 {
         this.score = 0;
         
         // Level config
-        this.totalEnemies = 10;
+        this.totalEnemies = 15;
         this.spawnedCount = 0;
         this.killCount = 0;
         this.arenaBounds = { minX: -24, maxX: 24, minZ: -14, maxZ: 14 };
+        
+        // Spawn timer
+        this.spawnInterval = 2.5; // seconds between spawns
+        this.spawnTimer = 0;
     }
     
     init() {
@@ -212,10 +216,6 @@ export class Level1 {
                         enemy.die(() => {
                             if (this.killCount >= this.totalEnemies) {
                                 this.levelComplete();
-                            } else if (this.spawnedCount < this.totalEnemies) {
-                                setTimeout(() => {
-                                    if (this.game.isRunning) this.spawnEnemy();
-                                }, 1500);
                             }
                         });
                     }
@@ -230,6 +230,15 @@ export class Level1 {
     }
     
     update(delta) {
+        // Timed spawning until all enemies are on stage
+        if (this.spawnedCount < this.totalEnemies) {
+            this.spawnTimer += delta;
+            if (this.spawnTimer >= this.spawnInterval) {
+                this.spawnTimer = 0;
+                this.spawnEnemy();
+            }
+        }
+        
         // Update player
         const moveInput = this.controls.getMoveInput();
         const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds, this.obstacles);
@@ -280,6 +289,7 @@ export class Level1 {
         this.score = 0;
         this.killCount = 0;
         this.spawnedCount = 0;
+        this.spawnTimer = 0;
         this.game.ui.reset();
         
         this.enemies.forEach(e => e.destroy());

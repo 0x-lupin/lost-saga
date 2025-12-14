@@ -14,6 +14,11 @@ export class Enemy {
         this.isAttacking = false;
         this.animTime = Math.random() * Math.PI * 2;
         
+        // Spawn animation state
+        this.isSpawning = true;
+        this.spawnProgress = 0;
+        this.spawnDuration = 1.2; // seconds to rise from ground
+        
         this.create(x, z);
     }
     
@@ -181,7 +186,7 @@ export class Enemy {
         this.mesh.add(headGroup);
         this.headGroup = headGroup;
         
-        this.mesh.position.set(x, 0, z); // Feet at ground level y=0
+        this.mesh.position.set(x, -1.8, z); // Start below ground for spawn animation
         this.scene.add(this.mesh);
     }
     
@@ -212,6 +217,33 @@ export class Enemy {
     }
     
     update(delta, playerPosition, arenaBounds) {
+        // Handle spawn animation
+        if (this.isSpawning) {
+            this.spawnProgress += delta;
+            const progress = Math.min(this.spawnProgress / this.spawnDuration, 1);
+            
+            // Ease out - slow down as zombie emerges
+            const easeOut = 1 - Math.pow(1 - progress, 2);
+            
+            // Rise from y=-1.8 to y=0
+            this.mesh.position.y = -1.8 + (1.8 * easeOut);
+            
+            // Arms burst out first, reaching upward
+            if (this.leftArm) this.leftArm.rotation.x = -1.5 + (0.7 * progress);
+            if (this.rightArm) this.rightArm.rotation.x = -1.5 + (0.7 * progress);
+            
+            // Slight body rotation as emerging
+            this.mesh.rotation.x = (1 - progress) * 0.3;
+            
+            if (progress >= 1) {
+                this.isSpawning = false;
+                this.mesh.position.y = 0;
+                this.mesh.rotation.x = 0;
+            }
+            
+            return playerPosition.distanceTo(this.mesh.position);
+        }
+        
         const direction = new THREE.Vector3()
             .subVectors(playerPosition, this.mesh.position)
             .normalize();
@@ -264,7 +296,7 @@ export class Enemy {
     }
     
     canAttack() {
-        return this.attackCooldown <= 0 && !this.isAttacking;
+        return this.attackCooldown <= 0 && !this.isAttacking && !this.isSpawning;
     }
     
     attack() {
@@ -285,6 +317,9 @@ export class Enemy {
     }
     
     takeDamage(amount, knockbackDir) {
+        // Invulnerable while spawning
+        if (this.isSpawning) return false;
+        
         this.health -= amount;
         
         if (knockbackDir) {
