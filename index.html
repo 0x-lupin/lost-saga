@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -9,20 +10,26 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/menu.css">
 </head>
+
 <body>
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
-        
+
         <!-- UI Overlay -->
         <div id="ui-overlay" class="hidden">
-            <div id="health-bar">
-                <div id="health-fill"></div>
-                <span id="health-text">100</span>
+            <div id="player-stats">
+                <div id="health-bar">
+                    <div id="health-fill"></div>
+                    <span id="health-text">100</span>
+                </div>
+                <div id="dash-bar">
+                    <div id="dash-fill"></div>
+                </div>
             </div>
             <div id="score">Score: <span id="score-value">0</span></div>
             <button id="fullscreen-btn" aria-label="Toggle Fullscreen">&#x26F6;</button>
         </div>
-        
+
         <!-- Mobile Controls -->
         <div id="mobile-controls">
             <div id="joystick-container">
@@ -33,15 +40,19 @@
             <div id="action-buttons">
                 <button id="btn-jump" class="action-btn">JUMP</button>
                 <button id="btn-attack" class="action-btn">ATK</button>
+                <button id="btn-dash" class="action-btn">
+                    DASH
+                    <div class="cooldown-overlay"></div>
+                </button>
             </div>
         </div>
-        
+
         <!-- Main Menu Screen -->
         <div id="main-menu-screen">
             <div class="menu-content">
                 <h1 class="game-title">LOST SAGA</h1>
                 <p class="game-subtitle">The Warrior's Journey</p>
-                
+
                 <div id="main-menu-buttons" class="menu-buttons">
                     <button id="menu-survival-btn" class="menu-btn primary">
                         <span class="btn-icon">&#x2694;</span> SURVIVAL
@@ -53,7 +64,7 @@
                         <span class="btn-icon">&#9733;</span> CREDITS
                     </button>
                 </div>
-                
+
                 <!-- Options Panel -->
                 <div id="options-panel" class="menu-panel hidden">
                     <h2>OPTIONS</h2>
@@ -67,7 +78,7 @@
                     </div>
                     <button id="options-back-btn" class="menu-btn">BACK</button>
                 </div>
-                
+
                 <!-- Credits Panel -->
                 <div id="credits-panel" class="menu-panel hidden">
                     <h2>CREDITS</h2>
@@ -80,13 +91,13 @@
                     </p>
                     <button id="credits-back-btn" class="menu-btn">BACK</button>
                 </div>
-                
+
                 <p class="menu-instructions">
                     Move: WASD | Jump: Space | Attack: Click
                 </p>
             </div>
         </div>
-        
+
         <!-- Game Over Screen -->
         <div id="game-over-screen" class="hidden">
             <h1>GAME OVER</h1>
@@ -96,7 +107,7 @@
                 <button id="menu-btn">MAIN MENU</button>
             </div>
         </div>
-        
+
         <!-- Level Complete Screen -->
         <div id="level-complete-screen" class="hidden">
             <h1>LEVEL COMPLETE!</h1>
@@ -104,10 +115,9 @@
             <button id="next-btn">NEXT LEVEL</button>
         </div>
     </div>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="assets/js/main.js" type="module"></script>
 </body>
+
 </html>
-
-

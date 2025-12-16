@@ -20,7 +20,7 @@ export class Game {
         this.gameState = 'menu'; // 'menu', 'playing', 'paused'
         this.isRunning = false;
         this.clock = new THREE.Clock();
-        
+
         this.setupRenderer();
         this.setupScene();
         this.setupCamera();
@@ -31,27 +31,27 @@ export class Game {
         registerAllSounds(this.sound);
         this.setupUIEvents();
     }
-    
+
     setupRenderer() {
         this.canvas = document.getElementById('game-canvas');
-        this.renderer = new THREE.WebGLRenderer({ 
-            canvas: this.canvas, 
-            antialias: true 
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            antialias: true
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        
+
         window.addEventListener('resize', () => this.onResize());
     }
-    
+
     setupScene() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x1a1a2e);
         this.scene.fog = new THREE.Fog(0x1a1a2e, 20, 80);
     }
-    
+
     setupCamera() {
         this.camera = new THREE.PerspectiveCamera(
             60, window.innerWidth / window.innerHeight, 0.1, 1000
@@ -59,11 +59,11 @@ export class Game {
         this.camera.position.set(0, 10, 12);
         this.camera.lookAt(0, 0, 0);
     }
-    
+
     setupLights() {
         const ambientLight = new THREE.AmbientLight(0x404080, 0.5);
         this.scene.add(ambientLight);
-        
+
         this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
         this.directionalLight.position.set(10, 20, 10);
         this.directionalLight.castShadow = true;
@@ -74,12 +74,12 @@ export class Game {
         // Default shadow bounds (can be configured per level)
         this.setShadowBounds(-20, 20, 20, -20);
         this.scene.add(this.directionalLight);
-        
+
         const pointLight = new THREE.PointLight(0xff6600, 0.8, 30);
         pointLight.position.set(-5, 5, 5);
         this.scene.add(pointLight);
     }
-    
+
     setShadowBounds(left, right, top, bottom) {
         this.directionalLight.shadow.camera.left = left;
         this.directionalLight.shadow.camera.right = right;
@@ -87,16 +87,16 @@ export class Game {
         this.directionalLight.shadow.camera.bottom = bottom;
         this.directionalLight.shadow.camera.updateProjectionMatrix();
     }
-    
+
     setupControls() {
         this.controls = new Controls();
     }
-    
+
     setupUIEvents() {
         document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
         document.getElementById('fullscreen-btn').addEventListener('click', () => this.toggleFullscreen());
         document.getElementById('next-btn').addEventListener('click', () => this.nextLevel());
-        
+
         // Main menu events
         document.getElementById('menu-survival-btn')?.addEventListener('click', () => this.onMenuSurvival());
         document.getElementById('menu-options-btn')?.addEventListener('click', () => this.showOptions());
@@ -104,7 +104,7 @@ export class Game {
         document.getElementById('options-back-btn')?.addEventListener('click', () => this.hideOptions());
         document.getElementById('credits-back-btn')?.addEventListener('click', () => this.hideCredits());
         document.getElementById('menu-btn')?.addEventListener('click', () => this.returnToMenu());
-        
+
         // Volume sliders
         document.getElementById('music-volume')?.addEventListener('input', (e) => {
             this.sound.setMusicVolume(e.target.value / 100);
@@ -113,39 +113,46 @@ export class Game {
             this.sound.setSfxVolume(e.target.value / 100);
         });
     }
-    
+
     showMainMenu() {
         this.gameState = 'menu';
         this.clearScene();
         this.setupLights();
-        
+
         document.getElementById('main-menu-screen').classList.remove('hidden');
         document.getElementById('main-menu-screen').classList.remove('fade-out');
         document.getElementById('main-menu-buttons').classList.remove('hidden');
+
+        // Ensure other screens are hidden
         document.getElementById('options-panel').classList.add('hidden');
         document.getElementById('credits-panel').classList.add('hidden');
         document.getElementById('ui-overlay').classList.add('hidden');
-        
+        document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('level-complete-screen').classList.add('hidden');
+
         this.mainMenu = new MainMenu(this);
         this.mainMenu.init();
         this.isRunning = true;
     }
-    
+
     onMenuSurvival() {
         this.sound.init();
         this.sound.resume();
         this.sound.play('hit');
         this.startSurvival();
     }
-    
+
     startSurvival() {
         this.gameState = 'playing';
         this.clearScene();
         this.setupLights();
-        
+
         document.getElementById('main-menu-screen').classList.add('hidden');
-        document.getElementById('ui-overlay').classList.remove('hidden');
-        
+
+        // Show the UI overlay
+        const ui = document.getElementById('ui-overlay');
+        if (ui) ui.classList.remove('hidden');
+
         this.loadLevel(Survival1);
         this.isRunning = true;
         this.clock.start();
@@ -153,7 +160,7 @@ export class Game {
             this.currentLevel.onStart();
         }
     }
-    
+
     clearScene() {
         // Properly destroy current scene objects
         if (this.mainMenu) {
@@ -164,40 +171,40 @@ export class Game {
             this.currentLevel.destroy();
             this.currentLevel = null;
         }
-        
+
         // Remove all objects from scene
         while (this.scene.children.length > 0) {
             this.scene.remove(this.scene.children[0]);
         }
     }
-    
+
     showOptions() {
         document.getElementById('options-panel').classList.remove('hidden');
         document.getElementById('main-menu-buttons').classList.add('hidden');
     }
-    
+
     hideOptions() {
         document.getElementById('options-panel').classList.add('hidden');
         document.getElementById('main-menu-buttons').classList.remove('hidden');
     }
-    
+
     showCredits() {
         document.getElementById('credits-panel').classList.remove('hidden');
         document.getElementById('main-menu-buttons').classList.add('hidden');
     }
-    
+
     hideCredits() {
         document.getElementById('credits-panel').classList.add('hidden');
         document.getElementById('main-menu-buttons').classList.remove('hidden');
     }
-    
+
     returnToMenu() {
         this.sound.fadeOutMusic(0.5);
         this.ui.hideGameOver();
         this.ui.hideLevelComplete();
         this.showMainMenu();
     }
-    
+
     nextLevel() {
         this.ui.hideLevelComplete();
         // For now, restart current level (Level 2 can be added later)
@@ -206,18 +213,18 @@ export class Game {
         }
         this.isRunning = true;
     }
-    
+
     loadLevel(LevelClass) {
         // Note: clearScene() should be called before this to properly cleanup
         this.currentLevel = new LevelClass(this);
         this.currentLevel.init();
     }
-    
+
     start() {
         this.showMainMenu();
         this.animate();
     }
-    
+
     restartGame() {
         if (this.currentLevel) {
             this.currentLevel.restart();
@@ -225,7 +232,7 @@ export class Game {
         this.ui.hideGameOver();
         this.isRunning = true;
     }
-    
+
     toggleFullscreen() {
         const container = document.getElementById('game-container');
         if (!document.fullscreenElement) {
@@ -237,32 +244,32 @@ export class Game {
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         }
     }
-    
+
     gameOver(score) {
         this.isRunning = false;
         this.sound.play('gameOver');
         this.sound.fadeOutMusic(1);
         this.ui.showGameOver(score);
     }
-    
+
     levelComplete(score) {
         this.isRunning = false;
         this.sound.play('levelComplete');
         this.sound.fadeOutMusic(1);
         this.ui.showLevelComplete(score);
     }
-    
+
     onResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
-    
+
     animate() {
         requestAnimationFrame(() => this.animate());
-        
+
         const delta = Math.min(this.clock.getDelta(), 0.1);
-        
+
         if (this.isRunning) {
             if (this.gameState === 'menu' && this.mainMenu) {
                 this.mainMenu.update(delta);
@@ -270,7 +277,7 @@ export class Game {
                 this.currentLevel.update(delta);
             }
         }
-        
+
         this.renderer.render(this.scene, this.camera);
     }
 }
