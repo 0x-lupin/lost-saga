@@ -1,40 +1,24 @@
 // Level 1 - Training Grounds
+// Extends BaseLevel for shared functionality
 
-import { Player } from '../entities/Player.js';
+import { BaseLevel } from '../core/BaseLevel.js';
 import { Enemy } from '../entities/Enemy.js';
 import { createTree, createRock, createTorch, createDummy, createGrass } from '../props/index.js';
 
-export class Level1 {
+export class Level1 extends BaseLevel {
     constructor(game) {
-        // References
-        this.game = game;
-        this.scene = game.scene;
-        this.camera = game.camera;
-        this.controls = game.controls;
+        super(game, {
+            arenaBounds: { minX: -24, maxX: 24, minZ: -14, maxZ: 14 },
+            cameraOffset: { x: 0, y: 10, z: 12 },
+            cameraHeightFactor: 0.5,
+            scoreMultiplier: 1
+        });
         
-        // Entities
-        this.player = null;
-        this.enemies = [];
-        this.platforms = [];
-        this.obstacles = [];
-        
-        // Level config
-        this.score = 0;
+        // Level-specific config
         this.totalEnemies = 15;
         this.spawnedCount = 0;
-        this.killCount = 0;
-        this.arenaBounds = { minX: -24, maxX: 24, minZ: -14, maxZ: 14 };
-        
-        // Spawn timer
         this.spawnInterval = 2.5; // seconds between spawns
         this.spawnTimer = 0;
-    }
-    
-    init() {
-        this.createEnvironment();
-        this.createPlayer();
-        this.spawnEnemies();
-        this.bindControls();
     }
     
     createEnvironment() {
@@ -136,11 +120,7 @@ export class Level1 {
         }
     }
     
-    createPlayer() {
-        this.player = new Player(this.scene);
-    }
-    
-    spawnEnemies() {
+    spawnInitialEnemies() {
         const positions = [
             { x: -10, z: 0 },
             { x: 10, z: 0 },
@@ -164,74 +144,7 @@ export class Level1 {
         this.spawnedCount++;
     }
     
-    bindControls() {
-        this.controls.onJump = () => {
-            if (this.game.isRunning && this.player.jump()) {
-                this.game.sound.playVaried('jump', 0.15);
-            }
-        };
-        this.controls.onAttack = () => {
-            if (!this.game.isRunning) return;
-            const didAttack = this.player.attack(() => this.handleAttack());
-            if (didAttack) {
-                this.game.sound.playVaried('swing', 0.1);
-            }
-        };
-    }
-    
-    handleAttack() {
-        const playerPos = this.player.getPosition();
-        const attackRange = this.player.getAttackRange();
-        const playerRotation = this.player.mesh.rotation.y;
-        
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.enemies[i];
-            const enemyPos = enemy.getPosition();
-            const distance = playerPos.distanceTo(enemyPos);
-            
-            // Check if enemy is within range AND in front of player (within 120 degree arc)
-            if (distance < attackRange) {
-                // Calculate angle to enemy
-                const toEnemy = new THREE.Vector3().subVectors(enemyPos, playerPos);
-                const angleToEnemy = Math.atan2(toEnemy.x, toEnemy.z);
-                
-                // Calculate angle difference (normalize to -PI to PI)
-                let angleDiff = angleToEnemy - playerRotation;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                
-                // Only hit if within 60 degrees of facing direction (120 degree arc total)
-                const attackArc = Math.PI / 3; // 60 degrees each side = 120 degree arc
-                if (Math.abs(angleDiff) < attackArc) {
-                    const knockDir = new THREE.Vector3().subVectors(enemyPos, playerPos).normalize();
-                    const isDead = enemy.takeDamage(this.player.attackDamage, knockDir);
-                    this.game.sound.playVaried('hit', 0.1);
-                    
-                    if (isDead) {
-                        this.enemies.splice(i, 1);
-                        this.score += 100;
-                        this.killCount++;
-                        this.updateScore();
-                        this.game.sound.playVaried('enemyDeath', 0.15);
-                        
-                        // Play death animation then check level complete
-                        enemy.die(() => {
-                            if (this.killCount >= this.totalEnemies) {
-                                this.levelComplete();
-                            }
-                        });
-                    }
-                }
-            }
-        }
-    }
-    
-    onStart() {
-        // Start procedural background music
-        this.game.sound.playMusic('bgm');
-    }
-    
-    update(delta) {
+    updateLevel(delta) {
         // Timed spawning until all enemies are on stage
         if (this.spawnedCount < this.totalEnemies) {
             this.spawnTimer += delta;
@@ -240,98 +153,18 @@ export class Level1 {
                 this.spawnEnemy();
             }
         }
-        
-        // Update player
-        const moveInput = this.controls.getMoveInput();
-        const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds, this.obstacles, this.enemies);
-        
-        if (fell) {
-            this.takeDamage(100);
+    }
+    
+    checkLevelComplete() {
+        if (this.killCount >= this.totalEnemies) {
+            this.game.isRunning = false;
+            this.game.levelComplete(this.score);
         }
-        
-        // Camera follow
-        const playerPos = this.player.getPosition();
-        this.camera.position.x = playerPos.x;
-        this.camera.position.y = 10 + playerPos.y * 0.5;
-        this.camera.position.z = playerPos.z + 12;
-        this.camera.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
-        
-        // Update enemies
-        this.enemies.forEach(enemy => {
-            if (enemy.isDying) return;
-            enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
-            if (enemy.canAttack()) {
-                // Start attack with callback - damage is dealt after wind-up
-                enemy.attack((damage) => {
-                    // Check if player is still in range when attack lands
-                    const currentPlayerPos = this.player.getPosition();
-                    const currentEnemyPos = enemy.getPosition();
-                    const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
-                    
-                    if (currentDistance < enemy.lungeRange + enemy.playerRadius) {
-                        const knockbackDir = new THREE.Vector3()
-                            .subVectors(currentPlayerPos, currentEnemyPos)
-                            .normalize();
-                        this.takeDamage(damage, knockbackDir);
-                    }
-                });
-            }
-        });
-    }
-    
-    takeDamage(amount, knockbackDir = null) {
-        const isDead = this.player.takeDamage(amount, knockbackDir);
-        this.game.ui.updateHealth(this.player.health, this.player.maxHealth);
-        this.game.ui.showDamageFlash();
-        this.game.sound.playVaried('playerHurt', 0.1);
-        
-        if (isDead) {
-            this.game.gameOver(this.score);
-        }
-    }
-    
-    updateScore() {
-        this.game.ui.updateScore(this.score);
-    }
-    
-    levelComplete() {
-        this.game.isRunning = false;
-        this.game.levelComplete(this.score);
     }
     
     restart() {
-        this.player.reset();
-        this.score = 0;
-        this.killCount = 0;
+        super.restart();
         this.spawnedCount = 0;
         this.spawnTimer = 0;
-        this.game.ui.reset();
-        
-        this.enemies.forEach(e => e.destroy());
-        this.enemies = [];
-        this.spawnEnemies();
-        
-        // Restart music
-        this.game.sound.playMusic('bgm');
-    }
-    
-    destroy() {
-        // Cleanup control bindings
-        this.controls.onJump = null;
-        this.controls.onAttack = null;
-        
-        // Cleanup enemies
-        this.enemies.forEach(e => e.destroy());
-        this.enemies = [];
-        
-        // Cleanup player
-        if (this.player) {
-            this.scene.remove(this.player.mesh);
-            this.player = null;
-        }
-        
-        // Cleanup platforms (scene objects removed by clearScene)
-        this.platforms = [];
-        this.obstacles = [];
     }
 }
