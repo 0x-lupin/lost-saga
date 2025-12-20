@@ -2,6 +2,7 @@
 
 import { Controls } from '../controls.js';
 import { UI } from './UI.js';
+import { CameraController } from './Camera.js';
 import { SoundManager } from '../sounds/SoundManager.js';
 import { registerAllSounds } from '../sounds/index.js';
 import { MainMenu } from '../scenes/MainMenu.js';
@@ -11,6 +12,7 @@ export class Game {
     constructor() {
         this.scene = null;
         this.camera = null;
+        this.cameraController = null;
         this.renderer = null;
         this.controls = null;
         this.ui = null;
@@ -58,6 +60,9 @@ export class Game {
         );
         this.camera.position.set(0, 10, 12);
         this.camera.lookAt(0, 0, 0);
+        
+        // Initialize camera controller
+        this.cameraController = new CameraController(this.camera);
     }
 
     setupLights() {

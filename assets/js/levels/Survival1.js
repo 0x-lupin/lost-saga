@@ -1,46 +1,28 @@
 // Survival Mode - Large Open Arena
+// Extends BaseLevel for shared functionality
 
-import { Player } from '../entities/Player.js';
+import { BaseLevel } from '../core/BaseLevel.js';
 import { Enemy } from '../entities/Enemy.js';
 import { createTree, createRock, createTorch, createDummy, createGrass } from '../props/index.js';
 
-export class Survival1 {
+export class Survival1 extends BaseLevel {
     constructor(game) {
-        this.game = game;
-        this.scene = game.scene;
-        this.camera = game.camera;
-        this.controls = game.controls;
-
-        this.player = null;
-        this.enemies = [];
-        this.platforms = [];
-        this.obstacles = [];
-        this.score = 0;
-        this.killCount = 0;
-
-        // Survival config - large arena
-        this.arenaBounds = { minX: -48, maxX: 48, minZ: -28, maxZ: 28 };
-
-        // Endless spawning
+        super(game, {
+            arenaBounds: { minX: -48, maxX: 48, minZ: -28, maxZ: 28 },
+            cameraOffset: { x: 0, y: 14, z: 16 },
+            cameraHeightFactor: 0.5,
+            scoreMultiplier: 1, // Will be modified by difficultyLevel
+            shadowBounds: { left: -50, right: 50, top: 30, bottom: -30 }
+        });
+        
+        // Endless spawning config
         this.maxEnemiesAlive = 12;
         this.spawnInterval = 3.0;
         this.spawnTimer = 0;
         this.difficultyTimer = 0;
         this.difficultyLevel = 1;
     }
-
-    init() {
-        // Larger arena needs bigger shadow bounds
-        this.game.setShadowBounds(-50, 50, 30, -30);
-
-        this.game.ui.reset(); // Initialize HUD (Health/Score)
-
-        this.createEnvironment();
-        this.createPlayer();
-        this.spawnInitialEnemies();
-        this.bindControls();
-    }
-
+    
     createEnvironment() {
         // === LARGE GROUND ===
         const groundGeo = new THREE.BoxGeometry(100, 1, 60);
@@ -179,10 +161,6 @@ export class Survival1 {
         });
     }
 
-    createPlayer() {
-        this.player = new Player(this.scene);
-    }
-
     spawnInitialEnemies() {
         const positions = [
             { x: -15, z: -10 }, { x: 15, z: -10 },
@@ -218,13 +196,9 @@ export class Survival1 {
         const level = this.difficultyLevel;
 
         // Single roll to determine zombie type
-        // Example: bigChance=5%, fastChance=3%
-        // Roll 0.00-0.05 → Big (5%)
-        // Roll 0.05-0.08 → Fast (3%)
-        // Roll 0.08-1.00 → Normal (92%)
         const roll = Math.random();
-        const bigChance = Math.min(0.05, 0.01 + level * 0.0015);   // 1% → 5%
-        const fastChance = Math.min(0.08, 0.03 + level * 0.0025);  // 3% → 8%
+        const bigChance = Math.min(0.05, 0.01 + level * 0.0015);
+        const fastChance = Math.min(0.08, 0.03 + level * 0.0025);
 
         // Big zombie
         if (level >= 1 && roll < bigChance) {
@@ -254,71 +228,17 @@ export class Survival1 {
         };
     }
 
-    bindControls() {
-        this.controls.onJump = () => {
-            if (this.game.isRunning && this.player.jump()) {
-                this.game.sound.playVaried('jump', 0.15);
-            }
-        };
-        this.controls.onAttack = () => {
-            if (!this.game.isRunning) return;
-            const didAttack = this.player.attack(() => this.handleAttack());
-            if (didAttack) {
-                this.game.sound.playVaried('swing', 0.1);
-            }
-        };
-        this.controls.onDash = () => {
-            if (this.game.isRunning) {
-                const moveInput = this.controls.getMoveInput();
-                if (this.player.dash(moveInput)) {
-                    this.game.sound.playVaried('jump', 0.2); // Reuse jump sound for now, higher pitch
-                }
-            }
-        };
+    // Override to apply difficulty-based score multiplier
+    onEnemyKilled(enemy, index) {
+        this.enemies.splice(index, 1);
+        this.score += 100 * this.difficultyLevel;
+        this.killCount++;
+        this.updateScore();
+        this.game.sound.playVaried('enemyDeath', 0.15);
+        enemy.die();
     }
 
-    handleAttack() {
-        const playerPos = this.player.getPosition();
-        const attackRange = this.player.getAttackRange();
-        const playerRotation = this.player.mesh.rotation.y;
-
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.enemies[i];
-            const enemyPos = enemy.getPosition();
-            const distance = playerPos.distanceTo(enemyPos);
-
-            if (distance < attackRange) {
-                const toEnemy = new THREE.Vector3().subVectors(enemyPos, playerPos);
-                const angleToEnemy = Math.atan2(toEnemy.x, toEnemy.z);
-
-                let angleDiff = angleToEnemy - playerRotation;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
-                const attackArc = Math.PI / 3;
-                if (Math.abs(angleDiff) < attackArc) {
-                    const knockDir = new THREE.Vector3().subVectors(enemyPos, playerPos).normalize();
-                    const isDead = enemy.takeDamage(this.player.attackDamage, knockDir);
-                    this.game.sound.playVaried('hit', 0.1);
-
-                    if (isDead) {
-                        this.enemies.splice(i, 1);
-                        this.score += 100 * this.difficultyLevel;
-                        this.killCount++;
-                        this.updateScore();
-                        this.game.sound.playVaried('enemyDeath', 0.15);
-                        enemy.die();
-                    }
-                }
-            }
-        }
-    }
-
-    onStart() {
-        this.game.sound.playMusic('bgm');
-    }
-
-    update(delta) {
+    updateLevel(delta) {
         // Spawn timer
         this.spawnTimer += delta;
         if (this.spawnTimer >= this.spawnInterval) {
@@ -334,93 +254,14 @@ export class Survival1 {
             this.maxEnemiesAlive = Math.min(999, 12 + this.difficultyLevel);
             this.spawnInterval = Math.max(0.9, 3.0 - this.difficultyLevel * 0.1);
         }
-
-        // Update player
-        const moveInput = this.controls.getMoveInput();
-        const fell = this.player.update(delta, moveInput, this.platforms, this.arenaBounds, this.obstacles, this.enemies);
-
-        // Update Dash UI
-        this.game.ui.updateDashCooldown(this.player.dashCooldownTimer, this.player.dashCooldown);
-
-        if (fell) {
-            this.takeDamage(100);
-        }
-
-        // Camera follow (wider view for large map)
-        const playerPos = this.player.getPosition();
-        this.camera.position.x = playerPos.x;
-        this.camera.position.y = 14 + playerPos.y * 0.5;
-        this.camera.position.z = playerPos.z + 16;
-        this.camera.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
-
-        // Update enemies
-        this.enemies.forEach(enemy => {
-            if (enemy.isDying) return;
-            enemy.update(delta, playerPos, this.arenaBounds, this.obstacles, this.enemies, this.player.collisionRadius, this.player.mass);
-            if (enemy.canAttack()) {
-                enemy.attack((damage) => {
-                    const currentPlayerPos = this.player.getPosition();
-                    const currentEnemyPos = enemy.getPosition();
-                    const currentDistance = currentPlayerPos.distanceTo(currentEnemyPos);
-
-                    if (currentDistance < enemy.lungeRange + enemy.playerRadius) {
-                        const knockbackDir = new THREE.Vector3()
-                            .subVectors(currentPlayerPos, currentEnemyPos)
-                            .normalize();
-                        this.takeDamage(damage, knockbackDir);
-                    }
-                });
-            }
-        });
-    }
-
-    takeDamage(amount, knockbackDir = null) {
-        const isDead = this.player.takeDamage(amount, knockbackDir);
-        this.game.ui.updateHealth(this.player.health, this.player.maxHealth);
-        this.game.ui.showDamageFlash();
-        this.game.sound.playVaried('playerHurt', 0.1);
-
-        if (isDead) {
-            this.game.gameOver(this.score);
-        }
-    }
-
-    updateScore() {
-        this.game.ui.updateScore(this.score);
     }
 
     restart() {
-        this.player.reset();
-        this.score = 0;
-        this.killCount = 0;
+        super.restart();
         this.spawnTimer = 0;
         this.difficultyTimer = 0;
         this.difficultyLevel = 1;
         this.maxEnemiesAlive = 12;
         this.spawnInterval = 3.0;
-        this.game.ui.reset();
-
-        this.enemies.forEach(e => e.destroy());
-        this.enemies = [];
-        this.spawnInitialEnemies();
-
-        this.game.sound.playMusic('bgm');
-    }
-
-    destroy() {
-        this.controls.onJump = null;
-        this.controls.onAttack = null;
-        this.controls.onDash = null;
-
-        this.enemies.forEach(e => e.destroy());
-        this.enemies = [];
-
-        if (this.player) {
-            this.scene.remove(this.player.mesh);
-            this.player = null;
-        }
-
-        this.platforms = [];
-        this.obstacles = [];
     }
 }

@@ -1,38 +1,44 @@
 // Player Module - Lost Saga
 // Realistic warrior character with detailed model
 
+import { PlayerConfig } from '../config/player.config.js';
+
 export class Player {
-    constructor(scene) {
+    constructor(scene, config = PlayerConfig) {
         this.scene = scene;
         this.mesh = null;
         this.velocity = { x: 0, y: 0, z: 0 };
         this.isGrounded = false;
         this.isAttacking = false;
-        this.health = 100;
-        this.maxHealth = 100;
-        this.attackDamage = 15;
-        this.moveSpeed = 8;
-        this.jumpForce = 12;
-        this.collisionRadius = 0.5;
-        this.mass = 1.0;
+        
+        // Core stats from config
+        this.health = config.stats.health;
+        this.maxHealth = config.stats.maxHealth;
+        this.attackDamage = config.stats.attackDamage;
+        this.moveSpeed = config.stats.moveSpeed;
+        this.jumpForce = config.stats.jumpForce;
+        this.collisionRadius = config.stats.collisionRadius;
+        this.mass = config.stats.mass;
+        this.attackRange = config.stats.attackRange;
 
         // Animation state
         this.animationTime = 0;
         this.isMoving = false;
 
-        // Attack animation state
+        // Attack animation state from config
         this.attackProgress = 0;
         this.attackPhase = 'none'; // 'windup', 'swing', 'followthrough', 'none'
         this.attackCallback = null;
         this.attackDuration = {
-            windup: 0.12,      // Wind-up time
-            swing: 0.08,       // Swing time (hit happens here)
-            followthrough: 0.15 // Follow-through time
+            windup: config.attack.windup,
+            swing: config.attack.swing,
+            followthrough: config.attack.followthrough
         };
 
-        // Knockback state
+        // Knockback state from config
         this.knockbackVelocity = { x: 0, z: 0 };
-        this.knockbackFriction = 8;
+        this.knockbackFriction = config.knockback.friction;
+        this.knockbackForce = config.knockback.force;
 
         // Dash state
         this.isDashing = false;
@@ -40,25 +46,13 @@ export class Player {
         this.dashCooldownTimer = 0;
         this.dashDirection = { x: 0, z: 1 };
 
-        // Dash stats
-        this.dashCooldown = 2.0;  // 2 seconds cooldown
-        this.dashDuration = 0.2;  // 0.2 seconds dash time
-        this.dashSpeed = 25;      // High burst of speed
+        // Dash stats from config
+        this.dashCooldown = config.dash.cooldown;
+        this.dashDuration = config.dash.duration;
+        this.dashSpeed = config.dash.speed;
 
-        // Colors
-        this.colors = {
-            skin: 0xd4a574,
-            skinDark: 0xc49464,
-            hair: 0x2c1810,
-            armor: 0x4a5568,
-            armorLight: 0x718096,
-            armorDark: 0x2d3748,
-            leather: 0x5c4033,
-            leatherDark: 0x3d2817,
-            gold: 0xd4af37,
-            cloth: 0x1a365d,
-            clothLight: 0x2c5282
-        };
+        // Colors from config
+        this.colors = { ...config.colors };
 
         this.create();
     }
@@ -1310,6 +1304,6 @@ export class Player {
     }
 
     getAttackRange() {
-        return 3.5;
+        return this.attackRange;
     }
 }

@@ -1,20 +1,24 @@
 // Enemy Module - Lost Saga
 // Zombie Enemy
 
+import { ZombieConfig } from '../config/enemies/zombie.config.js';
+
 export class Enemy {
     constructor(scene, x, z, id, config = {}) {
         this.scene = scene;
         this.mesh = null;
         this.id = id;
         
-        // Configurable stats with defaults for backward compatibility
+        // Use ZombieConfig as base defaults, allow override via config param
+        const baseStats = ZombieConfig.stats;
         const defaults = {
-            size: 1.0,
-            health: 30,
-            attackDamage: 10,
-            speed: 1.5 + Math.random() * 0.5,
-            lungeMultiplier: 1.5,
-            windUpDuration: 0.5
+            size: baseStats.size,
+            health: baseStats.health,
+            attackDamage: baseStats.attackDamage,
+            speed: baseStats.speed.base + Math.random() * baseStats.speed.variance,
+            lungeMultiplier: baseStats.lungeMultiplier,
+            windUpDuration: baseStats.windUpDuration,
+            attackCooldownTime: baseStats.attackCooldown
         };
         const settings = { ...defaults, ...config };
         
@@ -24,6 +28,7 @@ export class Enemy {
         this.maxHealth = settings.health;
         this.speed = settings.speed;
         this.attackDamage = settings.attackDamage;
+        this.attackCooldownTime = settings.attackCooldownTime;
         
         // Physical properties (all derived from size)
         this.collisionRadius = 0.5 * this.size;  // Body radius
@@ -45,10 +50,14 @@ export class Enemy {
         this.windUpDuration = settings.windUpDuration;
         this.onAttackHit = null;
         
-        // Spawn animation state
+        // Spawn animation state (from config)
         this.isSpawning = true;
         this.spawnProgress = 0;
-        this.spawnDuration = 1.2; // seconds to rise from ground
+        this.spawnDuration = ZombieConfig.spawn.duration;
+        this.spawnStartY = ZombieConfig.spawn.startY;
+        
+        // Colors from config
+        this.colors = { ...ZombieConfig.colors };
         
         // Animation state
         this.animTime = Math.random() * Math.PI * 2;
@@ -60,11 +69,11 @@ export class Enemy {
     create(x, z) {
         this.mesh = new THREE.Group();
         
-        // Zombie colors
-        const skinColor = 0x6b8e6b; // Greenish dead skin
-        const clothColor = 0x3d3d3d; // Torn dark clothes (shirt)
-        const pantsColor = 0x4a3728; // Dirty brown torn pants
-        const darkSkin = 0x4a6b4a;
+        // Zombie colors from config
+        const skinColor = this.colors.skin;
+        const clothColor = this.colors.cloth;
+        const pantsColor = this.colors.pants;
+        const darkSkin = this.colors.skinDark;
         
         // === LEGS ===
         const legGroup = new THREE.Group();
@@ -263,10 +272,10 @@ export class Enemy {
         this.isSpawning = true;
         this.spawnProgress = 0;
         
-        // Initial pose - zombie underground
+        // Initial pose - zombie underground (using config value)
         if (this.leftArm) this.leftArm.rotation.x = -1.5;
         if (this.rightArm) this.rightArm.rotation.x = -1.5;
-        this.mesh.position.y = -1.8;
+        this.mesh.position.y = this.spawnStartY;
         this.mesh.rotation.x = 0.3;
     }
     
@@ -279,8 +288,8 @@ export class Enemy {
         // Ease out - slow down as zombie emerges
         const easeOut = 1 - Math.pow(1 - progress, 2);
         
-        // Rise from y=-1.8 to y=0
-        this.mesh.position.y = -1.8 + (1.8 * easeOut);
+        // Rise from spawnStartY to y=0
+        this.mesh.position.y = this.spawnStartY + (Math.abs(this.spawnStartY) * easeOut);
         
         // Arms burst out first, reaching upward
         if (this.leftArm) this.leftArm.rotation.x = -1.5 + (0.7 * progress);
@@ -479,7 +488,7 @@ export class Enemy {
     }
     
     attack(onHitCallback) {
-        this.attackCooldown = 1.5;
+        this.attackCooldown = this.attackCooldownTime;
         this.isWindingUp = true;
         this.windUpProgress = 0;
         this.attackInterrupted = false;
